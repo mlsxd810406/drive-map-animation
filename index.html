@@ -481,15 +481,16 @@ heart:['喜爱','<path d="M12 20s-8-5-8-11a4 4 0 018-1 4 4 0 018 1c0 6-8 11-8 11
 const pinHtml=(ic,col)=>'<svg viewBox="0 0 36 46" width="32" height="41"><path d="M18 45C18 45 2 28 2 17a16 16 0 0132 0c0 11-16 28-16 28z" fill="'+col+'" stroke="#fff" stroke-width="2"/><g transform="translate(6 5)">'+(ICONS[ic]||ICONS.flag)[1]+'</g></svg>';
 let nodes=[],nodeLayer=L.layerGroup().addTo(map),svcStops=[],addMode=null,pendingFiles=null;
 function snapInfo(lat,lon){if(!coords.length)return {along:0,off:0,lat,lon};let best=1e9,bi=0;for(let i=0;i<coords.length;i++){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {along:cum[bi],off:best,lat:coords[bi][0],lon:coords[bi][1]};}
+const NODE_MAX_OFF=3;// 节点离路线超过 3 km 视为不在本路线，不停靠
 function rebuildStops(){nodeLayer.clearLayers();const ns=[];
  for(const n of nodes){const si=snapInfo(n.lat,n.lon);n.along=si.along;n.off=si.off;
-  const mk=L.marker([n.lat,n.lon],{icon:L.divIcon({className:'',html:pinHtml(n.icon,n.color),iconSize:[32,41],iconAnchor:[16,41]}),zIndexOffset:500}).bindTooltip((n.title||'自定义节点')+(n.off>5?'（距路线 '+n.off.toFixed(1)+' km）':'')).on('click',()=>editNode(n.id)).addTo(nodeLayer);
-  if(n.off>0.05)L.polyline([[n.lat,n.lon],[si.lat,si.lon]],{color:n.color,weight:2,dashArray:'4 4'}).addTo(nodeLayer);
-  if(si.along>0.5&&si.along<total-0.5)ns.push({node:n,label:n.title||'自定义节点',along:si.along,lat:si.lat,lon:si.lon,mk,dwell:n.dwell});}
+  const mk=L.marker([n.lat,n.lon],{icon:L.divIcon({className:'',html:pinHtml(n.icon,n.color),iconSize:[32,41],iconAnchor:[16,41]}),zIndexOffset:500}).bindTooltip((n.title||'自定义节点')+(n.off>NODE_MAX_OFF?'（距本路线 '+n.off.toFixed(0)+' km，不在本路线上，不停靠）':n.off>0.5?'（距路线 '+n.off.toFixed(1)+' km）':'')).on('click',()=>editNode(n.id)).addTo(nodeLayer);
+  if(n.off>0.05&&n.off<=NODE_MAX_OFF)L.polyline([[n.lat,n.lon],[si.lat,si.lon]],{color:n.color,weight:2,dashArray:'4 4'}).addTo(nodeLayer);
+  if(n.off<=NODE_MAX_OFF&&si.along>0.5&&si.along<total-0.5)ns.push({node:n,label:n.title||'自定义节点',along:si.along,lat:si.lat,lon:si.lon,mk,dwell:n.dwell});}
  stops=[...svcStops,...ns].sort((a,b)=>a.along-b.along);
  if(!playing&&dist===0)nextStop=0;else nextStop=stops.findIndex(s=>s.along>dist+0.01);if(nextStop<0)nextStop=stops.length;
  markNext();renderList();profBg=null;}
-function renderList(){const nc=$('ncount');if(nc)nc.textContent=nodes.length?'· '+nodes.length:'';$('nlist').innerHTML=nodes.length?nodes.map(n=>'<div class="ni"><span style="display:inline-block;transform:scale(.55);transform-origin:left center;width:20px;height:24px">'+pinHtml(n.icon,n.color)+'</span><span style="flex:1">'+(n.title||'自定义节点')+' · '+(n.along||0).toFixed(0)+'km · '+n.dwell+'s · '+n.photos.length+'图'+(n.off>5?' <b style="color:#c62828">⚠'+n.off.toFixed(1)+'km</b>':'')+'</span><a onclick="map.setView(['+n.lat+','+n.lon+'],12)">定位</a> <a onclick="editNode(\''+n.id+'\')">编辑</a> <a onclick="delNode(\''+n.id+'\')">删除</a></div>').join(''):'<div style="color:#888">（暂无，点“在地图上添加”或上传带GPS的照片）</div>';}
+function renderList(){const nc=$('ncount');if(nc)nc.textContent=nodes.length?'· '+nodes.length:'';$('nlist').innerHTML=nodes.length?nodes.map(n=>'<div class="ni"><span style="display:inline-block;transform:scale(.55);transform-origin:left center;width:20px;height:24px">'+pinHtml(n.icon,n.color)+'</span><span style="flex:1">'+(n.title||'自定义节点')+' · '+(n.off>NODE_MAX_OFF?'不在本路线 · ':(n.along||0).toFixed(0)+'km · ')+n.dwell+'s · '+n.photos.length+'图'+(n.off>5?' <b style="color:#c62828">⚠'+n.off.toFixed(1)+'km</b>':'')+'</span><a onclick="map.setView(['+n.lat+','+n.lon+'],12)">定位</a> <a onclick="editNode(\''+n.id+'\')">编辑</a> <a onclick="delNode(\''+n.id+'\')">删除</a></div>').join(''):'<div style="color:#888">（暂无，点“在地图上添加”或上传带GPS的照片）</div>';}
 // IndexedDB
 function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
 async function saveNodes(){try{const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(JSON.parse(JSON.stringify(nodes.map(({along,off,...n})=>n))),'nodes');}catch(e){}}
@@ -597,7 +598,7 @@ function restoreRuntime(st){window.__restoredFrom=st.dist;if(st.hidden&&!$('ctl'
  if(st.stop&&stops[st.stopIdx]){dist=stops[st.stopIdx].along;nextStop=st.stopIdx+1;}markNext();updateUI(1e12);
  if(st.playing){v=st.v||0;play(true);if(st.stop&&stops[st.stopIdx]){window.__resumeCd=Math.max(1,st.cd||1);showStop(stops[st.stopIdx]);}}
  else if(st.stop&&stops[st.stopIdx]){window.__resumeCd=Math.max(1,st.cd||1);showStop(stops[st.stopIdx]);}
- window.__restored=true;}
+ window.__restoredDist=dist;window.__restored=true;}
 // 浏览器拦截无手势的声音：首次交互时恢复，并给出轻提示
 function audioHint(){if(!AC||AC.state!=='suspended'||muted)return;const h=document.createElement('div');h.id='ahint';h.textContent='点击任意处恢复声音';document.body.appendChild(h);
  const go=()=>{AC.resume();h.remove();removeEventListener('pointerdown',go,true);removeEventListener('keydown',go,true);};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true);}
