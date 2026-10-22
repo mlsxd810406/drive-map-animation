@@ -1,0 +1,648 @@
+<!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
+<link rel="stylesheet" href="lib/leaflet.css"><script src="lib/leaflet.js"></script><link rel="stylesheet" href="lib/maplibre-gl.css"><script src="lib/maplibre-gl.js"></script><script src="lib/exifr.umd.js"></script><script src="lib/gcj.js"></script><script src="lib/gcjlabels.js"></script><script src="lib/addr.js"></script><script src="lib/basemap.js"></script>
+<script src="cache.js"></script><script src="regions.js"></script>
+<style>
+html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
+#map{position:absolute;inset:0}
+#fx{position:absolute;inset:0;z-index:650;pointer-events:none}
+#bar{position:absolute;z-index:1100;top:10px;left:10px;display:flex;gap:2px;padding:3px;border-radius:12px;background:rgba(255,255,255,.72);backdrop-filter:blur(18px) saturate(1.6);-webkit-backdrop-filter:blur(18px) saturate(1.6);box-shadow:0 2px 12px rgba(0,0,0,.18),inset 0 0 0 .5px rgba(255,255,255,.6)}
+#bar button,#bar a{display:flex;align-items:center;gap:5px;height:30px;padding:0 10px;border:0;border-radius:9px;background:transparent;font:500 13px/1 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;color:#1d1d1f;cursor:pointer;text-decoration:none}
+#bar button:hover,#bar a:hover{background:rgba(0,0,0,.06)}
+svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round;flex:none}
+#ctl{position:absolute;z-index:1000;top:54px;left:10px;width:280px;box-sizing:border-box;padding:6px 12px 10px;border-radius:14px;background:rgba(255,255,255,.74);backdrop-filter:blur(20px) saturate(1.6);-webkit-backdrop-filter:blur(20px) saturate(1.6);box-shadow:0 4px 24px rgba(0,0,0,.2),inset 0 0 0 .5px rgba(255,255,255,.6);font:13px/1.35 -apple-system,BlinkMacSystemFont,"SF Pro Text","PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;color:#1d1d1f;max-height:calc(100% - 214px);overflow:auto;scrollbar-width:thin}
+#ctl.hide{display:none}
+#ctl details{border-top:.5px solid rgba(0,0,0,.1);padding:2px 0 4px}#ctl details:first-of-type{border-top:0}
+#ctl summary{list-style:none;display:flex;align-items:center;justify-content:space-between;cursor:pointer;padding:7px 0 5px;font-size:11px;font-weight:600;letter-spacing:.06em;color:#86868b;text-transform:uppercase}
+#ctl summary::-webkit-details-marker{display:none}#ctl summary::after{content:"";width:6px;height:6px;border-right:1.5px solid #86868b;border-bottom:1.5px solid #86868b;transform:rotate(-45deg);transition:transform .2s;margin-right:3px}#ctl details[open]>summary::after{transform:rotate(45deg)}
+#ctl input:not([type=checkbox]):not([type=range]):not([type=file]),#ctl textarea,#ctl select{width:100%;box-sizing:border-box;margin:0;padding:6px 9px;font:inherit;border:0;border-radius:8px;background:rgba(118,118,128,.12);color:#1d1d1f;outline:none;resize:none}
+#ctl input:focus,#ctl textarea:focus,#ctl select:focus{box-shadow:0 0 0 2px rgba(0,122,255,.45)}
+.od{display:grid;grid-template-columns:12px 1fr 28px 28px;align-items:center;gap:6px;row-gap:5px}.od .dot{width:8px;height:8px;border-radius:50%;justify-self:center}
+.ib{width:28px;height:28px;display:grid;place-items:center;border:0;border-radius:8px;background:rgba(118,118,128,.12);color:#007aff;cursor:pointer;padding:0}.ib:hover{background:rgba(0,122,255,.14)}
+.row{display:grid;grid-auto-flow:column;grid-auto-columns:1fr;gap:6px;margin-top:6px}
+.btn{display:flex;align-items:center;justify-content:center;gap:5px;height:30px;padding:0 8px;border:0;border-radius:8px;background:rgba(118,118,128,.12);color:#1d1d1f;font:500 12.5px/1 inherit;font-family:inherit;cursor:pointer;white-space:nowrap}.btn:hover{background:rgba(118,118,128,.2)}
+.btn.pri{background:#007aff;color:#fff}.btn.pri:hover{background:#0a6be0}
+.seg{display:grid;grid-template-columns:repeat(3,1fr);padding:2px;border-radius:9px;background:rgba(118,118,128,.12)}.seg button{height:28px;border:0;border-radius:7px;background:transparent;color:#1d1d1f;cursor:pointer;display:grid;place-items:center}.seg button:hover{background:rgba(255,255,255,.7);box-shadow:0 1px 3px rgba(0,0,0,.12)}
+.fl{display:grid;grid-template-columns:62px 1fr;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:#3a3a3c}.fl .v{font-variant-numeric:tabular-nums;color:#86868b;font-size:11.5px}
+.sl{display:grid;grid-template-columns:62px 1fr 34px;align-items:center;gap:8px;margin-top:6px;font-size:12.5px;color:#3a3a3c}.sl input{width:100%;margin:0;accent-color:#007aff}.sl span{text-align:right;font-variant-numeric:tabular-nums;color:#86868b;font-size:11.5px}
+.sw{display:flex;align-items:center;justify-content:space-between;margin-top:4px;font-size:12.5px}.sw input{appearance:none;-webkit-appearance:none;width:36px;height:22px;border-radius:11px;background:rgba(120,120,128,.28);position:relative;cursor:pointer;margin:0;transition:background .2s}.sw input::after{content:"";position:absolute;top:2px;left:2px;width:18px;height:18px;border-radius:50%;background:#fff;box-shadow:0 1px 3px rgba(0,0,0,.3);transition:left .2s}.sw input:checked{background:#34c759}.sw input:checked::after{left:16px}
+.hint{font-size:11px;color:#86868b;margin-top:5px}
+#acdd{position:absolute;z-index:1300;max-height:300px;overflow:auto;border-radius:10px;background:rgba(255,255,255,.92);backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);box-shadow:0 6px 24px rgba(0,0,0,.22);font:13px/1.3 -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif}.aci{padding:7px 10px;cursor:pointer;border-bottom:.5px solid rgba(0,0,0,.07)}.aci:hover{background:rgba(0,122,255,.1)}.acn{color:#1d1d1f;font-weight:500}.aca{color:#86868b;font-size:11px}
+#ahint{position:absolute;z-index:1400;left:50%;bottom:156px;transform:translateX(-50%);padding:6px 14px;border-radius:999px;background:rgba(22,22,26,.78);color:#fff;font-size:12px;pointer-events:none;animation:fadein .4s}@keyframes fadein{from{opacity:0}}
+.maplibregl-ctrl-top-right{top:6px;right:4px}.mk3{cursor:pointer}#legend{position:absolute;z-index:999;right:10px;bottom:148px;display:flex;gap:10px;align-items:center;padding:5px 10px;border-radius:10px;background:rgba(20,20,22,.55);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);color:#f5f5f7;font:11px/1 -apple-system,"PingFang SC","Microsoft YaHei","Noto Sans CJK SC",sans-serif;pointer-events:none}
+#legend i{display:inline-block;width:18px;height:4px;border-radius:2px;margin-right:4px;vertical-align:middle}#legend b{display:inline-block;width:7px;height:7px;border-radius:50%;margin-right:3px;vertical-align:middle}
+#stat{position:absolute;z-index:1000;top:8px;right:44px;background:rgba(0,0,0,.7);color:#fff;border-radius:6px;padding:4px 10px;font-size:13px;line-height:1.45;white-space:nowrap}
+#stat b{color:#ffd54f;font-size:16px}
+.ni{display:flex;gap:4px;align-items:center;font-size:12px;border-bottom:1px solid #eee;padding:2px 0}.ni a,#ned a{color:#1565c0;cursor:pointer}
+#ned{display:none;position:absolute;z-index:1200;top:60px;left:320px;width:380px;background:#fff;border-radius:8px;padding:10px;box-shadow:0 2px 14px #0008;font-size:13px}#ned input,#ned textarea{width:100%;box-sizing:border-box;margin:2px 0 6px}
+#ne_icons{display:flex;flex-wrap:wrap;gap:2px}.icb{font-size:10px;text-align:center;width:52px;cursor:pointer;border:2px solid transparent;border-radius:4px}.icb.sel{border-color:#1565c0;background:#e3f2fd}
+.th{position:relative;display:inline-block;margin:2px}.th img{width:70px;height:52px;object-fit:cover;border-radius:3px}.th a{position:absolute;top:0;right:2px;background:#fff;border-radius:50%;font-size:11px}
+#stopBody .thumbs img{width:90px;height:60px;object-fit:cover;margin:2px;border-radius:3px;opacity:.6}#stopBody .thumbs img.cur{opacity:1;outline:2px solid #1565c0}
+#msg{color:#c62828;min-height:16px}
+#stop{position:absolute;z-index:1001;left:0;top:0;opacity:0;transition:opacity .3s;background:rgba(255,255,255,.96);border-radius:10px;padding:8px 10px;box-shadow:0 3px 14px #0008;width:340px;box-sizing:border-box;text-align:center;pointer-events:none;font-size:13px}
+#stop.on{opacity:1}
+#lead{position:absolute;left:0;top:0;width:100%;height:100%;z-index:1000;pointer-events:none}
+#stop h3{margin:0 0 4px;font-size:18px}.tag{display:inline-block;font-size:12px;padding:1px 6px;border-radius:4px;margin:0 2px;color:#fff}
+#stop h3{font-size:15px!important}#stop .intro{font-size:12.5px!important;line-height:1.45}#stopBody .thumbs img{width:56px!important;height:38px!important}
+#stop .intro{display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+#stop img{width:320px;height:160px;object-fit:cover;border-radius:6px;background:#ddd}
+#stop .t{font-weight:bold;margin-top:4px}#stop .intro{font-size:13px;color:#333;text-align:left;margin:4px 0}
+#stop .cr{font-size:11px;color:#888}#cd{color:#1565c0;font-weight:bold}
+.carw{width:44px;height:44px;will-change:transform}
+.pulse{width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-sizing:border-box}
+.pulse.next::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:3px solid #ffeb3b;animation:pl 1.4s ease-out infinite}
+@keyframes pl{from{transform:scale(1);opacity:1}to{transform:scale(3.2);opacity:0}}
+#sign{position:absolute;z-index:1002;top:70px;left:50%;transform:translateX(-50%) translateY(-20px);opacity:0;transition:all .4s;display:flex;align-items:center;gap:8px;padding:8px 16px;border-radius:6px;border:3px solid #fff;box-shadow:0 2px 10px #0008;color:#fff;font-size:22px;font-weight:bold}
+#sign.on{opacity:1;transform:translateX(-50%) translateY(0)}
+#sign .sh{padding:2px 8px;border-radius:4px;border:2px solid #fff;font-size:20px}
+#mini{position:absolute;z-index:1000;right:10px;bottom:10px;width:220px;height:130px;box-sizing:border-box;border-radius:8px;overflow:hidden;border:2px solid #fff;box-shadow:0 1px 6px #0007}
+#prof{position:absolute;z-index:1000;left:10px;width:calc(100% - 250px);bottom:10px;height:130px;background:rgba(0,0,0,.6);border-radius:8px}
+#arrive{position:absolute;z-index:1003;top:40%;left:50%;transform:translate(-50%,-50%) scale(.5);opacity:0;transition:all .6s cubic-bezier(.2,1.6,.4,1);background:rgba(255,255,255,.95);padding:18px 30px;border-radius:14px;font-size:30px;font-weight:bold;color:#d84315;box-shadow:0 4px 24px #0009;pointer-events:none}
+#arrive.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+body.rec #ctl,body.rec #bar{display:none}
+
+:root{--font:'PingFang SC','HarmonyOS Sans SC','Microsoft YaHei UI','Microsoft YaHei',system-ui,-apple-system,'Noto Sans CJK SC',sans-serif;--r-s:8px;--r-m:12px;--r-l:16px;--glass:rgba(255,255,255,.74);--glass-d:rgba(22,22,26,.78);--blur:blur(20px) saturate(1.7);--sh:0 8px 30px rgba(0,0,0,.18),0 1px 3px rgba(0,0,0,.12);--ink:#1d1d1f;--ink2:#3a3a3c;--mute:#86868b;--acc:#0a84ff;--ok:#30d158;--warn:#ff9f0a;--bad:#ff453a;--ease:cubic-bezier(.2,.9,.25,1.15)}
+html,body,#ctl,#bar button,#bar a,#legend,#acdd{font-family:var(--font)!important}
+#ctl{font-size:13px;letter-spacing:.01em}#ctl summary{font-size:11px;letter-spacing:.08em;color:var(--mute)}
+#ctl .btn{font-weight:500;font-size:12.5px}#ctl .btn.pri{font-weight:600;box-shadow:0 2px 8px rgba(10,132,255,.35)}
+.kb{line-height:1.5;margin-top:6px}
+#stat{top:10px;right:56px;padding:10px 14px 9px;border-radius:var(--r-l);background:var(--glass-d);box-shadow:var(--sh);color:#f5f5f7;font-family:var(--font);min-width:300px;white-space:normal;line-height:1.2}
+#stat .sg{display:grid;grid-template-columns:1fr 1fr auto;gap:14px;align-items:end}
+#stat .sk{font-size:10.5px;letter-spacing:.06em;color:rgba(235,235,245,.6);margin-bottom:2px}
+#stat .sn{display:flex;align-items:baseline;gap:3px}#stat .sn b{font-size:24px;font-weight:650;color:#fff;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+#stat #done{color:#ffd60a!important}#stat .sn small{font-size:11px;color:rgba(235,235,245,.6)}#stat .sn.sm span{font-size:15px;font-weight:600;font-variant-numeric:tabular-nums}
+#stat .pb{height:4px;border-radius:2px;background:rgba(255,255,255,.16);margin:8px 0 7px;overflow:hidden}#stat .pb i{display:block;height:100%;background:linear-gradient(90deg,#ffd60a,#ff9f0a);transform-origin:0 50%;transform:scaleX(0);transition:transform .25s linear;will-change:transform;border-radius:2px}
+#stat .sx{display:flex;gap:12px;font-size:11.5px;color:rgba(235,235,245,.7);margin-top:2px;flex-wrap:wrap}#stat .sx em{font-style:normal;color:#fff;font-weight:600;font-variant-numeric:tabular-nums}#stat .sw2{font-size:10.5px;color:rgba(235,235,245,.5)}
+#sign{top:78px;border-radius:var(--r-m);border:2px solid rgba(255,255,255,.95);box-shadow:var(--sh);font-family:var(--font);font-size:20px;font-weight:650;letter-spacing:.02em;padding:8px 16px;transition:opacity .35s,transform .5s var(--ease)}
+#sign .sh{border-radius:6px;font-size:17px;font-weight:700;padding:1px 8px}
+#stop{border-radius:var(--r-l);background:rgba(255,255,255,.9);backdrop-filter:var(--blur);-webkit-backdrop-filter:var(--blur);box-shadow:var(--sh);font-family:var(--font);padding:10px 10px 9px;transform:scale(.92) translateY(8px);transition:opacity .3s,transform .45s var(--ease),left .6s,top .6s!important}
+#stop.on{transform:none}#stop h3{font-weight:650;color:var(--ink);letter-spacing:.01em}#stop img{border-radius:10px}#stop .t{font-weight:600;color:var(--ink);font-size:13px}#stop .intro{color:var(--ink2)!important}#stop .cr{color:var(--mute)}#cd{color:var(--acc)}
+.tag{border-radius:999px!important;padding:1px 8px!important;font-weight:600}
+#prof{background:var(--glass-d)!important;border-radius:var(--r-l)!important;box-shadow:var(--sh)}
+#mini{border-radius:var(--r-l)!important;border:2px solid rgba(255,255,255,.85)!important;box-shadow:var(--sh)!important}
+#legend{border-radius:999px!important;padding:6px 12px!important;background:var(--glass-d)!important;box-shadow:var(--sh)}
+#arrive{font-family:var(--font);border-radius:20px;background:rgba(255,255,255,.92);backdrop-filter:var(--blur);color:var(--ink);font-weight:700;box-shadow:var(--sh)}
+.pulse{box-shadow:0 1px 4px rgba(0,0,0,.4)}.pulse.next::after{border-color:#ffd60a}
+#bar{box-shadow:var(--sh)!important}
+/* 播放时关闭大面积背景模糊（地图每帧移动，模糊重绘代价高），改用更不透明的底色 */
+body.playing #ctl,body.playing #bar,body.playing #legend{backdrop-filter:none!important;-webkit-backdrop-filter:none!important}body.playing #ctl{background:rgba(250,250,252,.93)}body.playing #bar{background:rgba(250,250,252,.92)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+@font-face{font-family:'Noto Sans SC Local';src:url(lib/fonts/NotoSansSC-sub.woff2) format('woff2');font-weight:100 900;font-display:swap}
+/* ===== 设计 A：自然简约（暖白 / 石灰 / 鼠尾草绿 / 赭石）===== */
+:root{--font:'Noto Sans SC Local','PingFang SC','HarmonyOS Sans SC','Microsoft YaHei UI','Microsoft YaHei',system-ui,sans-serif;--ink:#2b2a27;--ink2:#4a463f;--mute:#8a857c;--mute2:#a19b90;--hair:rgba(60,50,40,.1);--sage:#5f7f64;--sage2:#7d9b81;--sagebg:rgba(95,127,100,.13);--terra:#b5654a;--paper:rgba(250,248,244,.93);--paper2:rgba(250,248,244,.97);--charcoal:rgba(43,41,38,.84);--acc:#5f7f64;--sh:0 10px 36px rgba(40,32,20,.18),0 1px 3px rgba(40,32,20,.08)}
+html,body,#ctl,#bar button,#bar a,#legend,#acdd,#stat,#stop,#sign,#arrive,#ned{font-family:var(--font)!important}
+#ctl.pa{top:56px;left:12px;width:328px;padding:16px 16px 12px;border-radius:18px;background:var(--paper);backdrop-filter:blur(24px) saturate(1.5);-webkit-backdrop-filter:blur(24px) saturate(1.5);box-shadow:var(--sh);color:var(--ink);font-size:14px;max-height:calc(100% - 210px)}
+.pa-hd{display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px}.pa-hd h1{margin:0;font-size:18px;font-weight:500;letter-spacing:.04em}.pa-hd span{font-size:12px;color:var(--ink2)}
+.rt{border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);position:relative}
+.rt::before{content:"";position:absolute;left:7px;top:28px;bottom:28px;border-left:1px dashed #c9c2b6}
+.rt-row{display:grid;grid-template-columns:16px 1fr 56px;align-items:center;gap:8px;min-height:44px;position:relative}.rt-row+.rt-row,#vias .rt-row,#vias+.rt-row{border-top:1px solid rgba(60,50,40,.07)}
+.rt-dot{width:10px;height:10px;border-radius:50%;justify-self:center;position:relative;z-index:1}.rt-row.s .rt-dot{background:var(--sage);box-shadow:0 0 0 3px rgba(95,127,100,.18)}.rt-row.e .rt-dot{background:var(--terra);border-radius:3px;box-shadow:0 0 0 3px rgba(181,101,74,.15)}.rt-row.v .rt-dot{width:8px;height:8px;background:#faf8f4;border:1.5px solid var(--mute2)}
+.rt-f{display:flex;flex-direction:column;padding:6px 0;min-width:0}.rt-f small{font-size:11px;color:var(--mute2);letter-spacing:.08em;line-height:1.2}
+#ctl .rt-f input{border:0!important;background:transparent!important;padding:2px 0!important;font:400 15px/1.4 var(--font)!important;color:var(--ink)!important;box-shadow:none!important;border-radius:0!important;width:100%}
+#ctl .rt-f input::placeholder{color:#c2bcb1}
+.rt-a{display:flex;gap:0;justify-content:flex-end}
+#ctl .ib{width:28px;height:28px;background:transparent;color:var(--sage);border-radius:8px}#ctl .ib:hover{background:var(--sagebg)}#ctl .ib.rm{color:var(--mute2)}
+.rt-x{display:flex;align-items:center;gap:16px;padding:8px 2px 0;font-size:13px}.rt-x a{display:flex;align-items:center;gap:4px;color:var(--sage);cursor:pointer}.rt-x a+a{color:var(--mute)}.rt-x #geoset{margin-left:auto;color:var(--mute2)}.rt-x svg.i{width:14px;height:14px}
+.fold{display:none;padding:8px 0 0}.fold.on{display:block;animation:fadein .25s}
+.pa-act{display:grid;grid-template-columns:1fr 96px;gap:8px;margin:12px 0 4px}
+#ctl .bt{display:flex;align-items:center;justify-content:center;gap:6px;height:40px;border:0;border-radius:12px;font:500 15px/1 var(--font);letter-spacing:.06em;cursor:pointer;transition:background .2s,transform .1s}#ctl .bt:active{transform:scale(.98)}
+#ctl .bt.pri{background:var(--sage);color:#fbf9f4}#ctl .bt.pri:hover{background:#56745b}
+#ctl .bt.ol{background:transparent;color:var(--sage);box-shadow:inset 0 0 0 1px rgba(95,127,100,.45)}#ctl .bt.ol:hover{background:var(--sagebg)}
+#ctl .bt.ol2{height:36px;background:transparent;color:var(--ink2);box-shadow:inset 0 0 0 1px var(--hair);font-size:13px;letter-spacing:.02em}#ctl .bt.ol2.on{background:var(--sagebg);color:var(--sage);box-shadow:inset 0 0 0 1px rgba(95,127,100,.35)}#ctl .bt.ol2 em{font-style:normal;color:var(--mute)}
+.pa-sec{margin-top:10px}.pa-sh{display:flex;justify-content:space-between;font-size:12px;color:var(--mute2);letter-spacing:.14em;margin-bottom:6px}
+.pl{display:grid;grid-template-columns:120px 1fr;gap:8px;align-items:center}
+#ctl .seg{display:grid;grid-template-columns:repeat(3,1fr);padding:2px;border-radius:10px;background:rgba(60,50,40,.06)}#ctl .seg button{height:28px;border:0;border-radius:8px;background:transparent;color:#6f6a62;display:grid;place-items:center;cursor:pointer}#ctl .seg button:hover{background:rgba(255,255,255,.7)}
+body.playing #ctl #play,#ctl .seg button.on{background:#fff;color:var(--sage);box-shadow:0 1px 3px rgba(40,30,20,.12)}
+.chips{display:flex;gap:2px}.chips span{flex:1;text-align:center;font-size:12.5px;padding:6px 0;border-radius:8px;color:#6f6a62;cursor:pointer}.chips span:hover{background:rgba(60,50,40,.05)}.chips span.on{background:var(--sagebg);color:#4c6a51;font-weight:600}
+#ctl .sw{display:flex;justify-content:space-between;align-items:center;height:32px;font-size:14px;margin:0}#ctl .sw input{width:40px;height:24px}#ctl .sw input::after{width:20px;height:20px}#ctl .sw input:checked{background:var(--sage2)}
+#ctl .sl{grid-template-columns:64px 1fr 40px;height:28px;margin:0;font-size:14px;color:var(--ink)}#ctl .sl span:last-child{color:var(--mute);font-size:13px}
+#ctl input[type=range]{-webkit-appearance:none;appearance:none;height:2px;background:rgba(60,50,40,.14);border-radius:1px;accent-color:var(--sage2)}#ctl input[type=range]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(40,30,20,.3);cursor:pointer}
+.pa-ft{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:12px}
+#ctl .fold .btn{background:transparent;box-shadow:inset 0 0 0 1px var(--hair);color:var(--ink2);font-family:var(--font)}#ctl .fold .btn:hover{background:var(--sagebg)}#ctl .fold .fl{color:var(--ink2);grid-template-columns:80px 1fr}#ctl .fold .fl span{white-space:nowrap}
+#ctl .fold input:not([type=checkbox]){background:rgba(60,50,40,.05)!important;border-radius:8px}
+#ctl .hint{color:var(--mute2);font-size:11.5px}#ctl .kb{margin-top:10px}#msg{color:var(--terra)!important}
+#ctl input:focus{box-shadow:none!important}.rt-row:focus-within{background:linear-gradient(90deg,transparent,rgba(95,127,100,.05))}
+#bar{background:var(--paper)!important;box-shadow:var(--sh)!important;border-radius:14px!important}#bar button,#bar a{color:var(--ink2)!important;font-weight:400!important}#bar button:hover,#bar a:hover{background:rgba(60,50,40,.06)!important}
+body.playing #ctl{background:var(--paper2)!important}body.playing #bar{background:var(--paper2)!important}
+#stat{background:var(--paper)!important;color:var(--ink)!important;box-shadow:var(--sh)!important}#stat .sk{color:var(--mute2)!important;letter-spacing:.1em}#stat .sn b{color:var(--ink)!important;font-weight:500!important}#stat #done{color:var(--sage)!important}#stat .sn small,#stat .sn.sm span{color:var(--ink2)!important}#stat .sn.sm span{font-weight:500}
+#stat .pb{background:rgba(60,50,40,.1)!important;height:3px!important}#stat .pb i{background:linear-gradient(90deg,var(--sage2),var(--sage))!important}#stat .sx{color:var(--mute)!important}#stat .sx em{color:var(--ink)!important;font-weight:500!important}#stat #nfuel{color:var(--sage)!important}#stat .sw2{color:var(--mute2)!important}
+#legend{background:var(--paper)!important;color:var(--ink2)!important}
+#prof{background:var(--charcoal)!important}#mini{border-color:rgba(250,248,244,.9)!important}
+#stop{background:var(--paper2)!important}#stop h3{font-weight:500!important;letter-spacing:.03em}#stop .t{font-weight:500!important}#cd{color:var(--sage)!important}.tag[style*="43a047"]{background:var(--sage)!important}
+#sign{border-width:1.5px!important;font-weight:500!important;letter-spacing:.06em!important;box-shadow:var(--sh)!important}
+#arrive{color:var(--ink)!important;font-weight:500!important}
+#acdd{background:var(--paper2)!important}.aci:hover{background:var(--sagebg)!important}.acn{color:var(--ink)!important}
+#ned{border-radius:16px;background:var(--paper2);box-shadow:var(--sh);color:var(--ink)}
+
+/* 工具栏与面板共用宽度，左右边缘严格对齐；内容自适应不溢出 */
+:root{--pw:328px}
+#bar{left:12px!important;width:var(--pw);box-sizing:border-box;display:grid!important;grid-template-columns:repeat(3,minmax(0,1fr))}
+#bar button,#bar a{justify-content:center;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis;padding:0 6px!important}
+#ctl.pa{left:12px!important;width:var(--pw)!important;box-sizing:border-box;overflow-x:hidden;overflow-y:auto;scrollbar-width:thin;scrollbar-gutter:auto}
+#ctl.pa::-webkit-scrollbar{width:6px}#ctl.pa::-webkit-scrollbar-thumb{background:rgba(60,50,40,.18);border-radius:3px}
+#ctl.pa *{min-width:0}
+.pa-hd{flex-wrap:wrap;gap:4px 8px}.pa-hd span{white-space:nowrap}
+.pa-act{grid-template-columns:minmax(0,1fr) minmax(0,.42fr)!important}
+#ctl .bt{white-space:nowrap;overflow:hidden;padding:0 8px}
+.pl{grid-template-columns:minmax(96px,.9fr) minmax(0,1.6fr)!important}
+.chips span{min-width:0;padding:6px 0;font-size:12px;white-space:nowrap}
+.pa-ft{grid-template-columns:minmax(0,1fr) minmax(0,1fr)!important}.pa-ft .bt span{overflow:hidden;text-overflow:ellipsis}
+.rt-row{grid-template-columns:16px minmax(0,1fr) auto!important}
+#ctl .sl{grid-template-columns:auto minmax(0,1fr) 40px!important}#ctl .sl>span:first-child{white-space:nowrap}
+.rt-x{flex-wrap:wrap;gap:6px 14px}
+
+#bmsel{display:grid!important;grid-template-columns:1fr 1fr 1.7fr;gap:4px}#bmsel span{cursor:pointer;text-align:center}#bmsel span.dis{opacity:.45}
+#toast{position:absolute;z-index:3000;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-20px);opacity:0;transition:.35s;pointer-events:none;padding:8px 16px;border-radius:999px;background:var(--paper,#fbf9f5);color:var(--ink,#2b2a27);box-shadow:0 4px 18px rgba(40,30,20,.18);font:13px var(--font);max-width:90vw;text-align:center}#toast.on{opacity:1;transform:translate(-50%,0)}
+.grab,.mplay{display:none}
+html,body{overscroll-behavior:none}
+@media (max-width:640px),(max-height:500px){
+ html,body{position:fixed;inset:0;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
+ input,textarea{-webkit-user-select:text;user-select:text;font-size:16px!important}
+ #tog,#mini,#prof,.leaflet-control-zoom,.maplibregl-ctrl-top-right,#legend{display:none!important}
+ #stat{top:calc(env(safe-area-inset-top) + 8px)!important;left:calc(env(safe-area-inset-left) + 8px)!important;right:calc(env(safe-area-inset-right) + 8px)!important;min-width:0!important;padding:8px 12px!important}
+ #stat .sn b{font-size:20px!important}
+ #bar{left:auto!important;right:calc(env(safe-area-inset-right) + 8px)!important;top:auto!important;bottom:calc(var(--peek) + 12px);width:auto!important;grid-template-columns:1fr!important;transition:bottom .3s}
+ #bar button,#bar a{min-height:44px;min-width:44px!important}#bar span{display:none}
+ body.sheet #bar{opacity:0;pointer-events:none}
+ :root{--peek:calc(76px + env(safe-area-inset-bottom))}
+ #ctl.pa{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;width:auto!important;max-height:78vh!important;height:auto!important;border-radius:18px 18px 0 0!important;padding:0 16px calc(16px + env(safe-area-inset-bottom))!important;transform:translateY(calc(100% - var(--peek)));transition:transform .32s cubic-bezier(.2,.8,.2,1);overflow-y:hidden;touch-action:pan-y;display:block!important}
+ #ctl.pa.hide{display:block!important}
+ body.sheet #ctl.pa{transform:none;overflow-y:auto}
+ #ctl.pa.drag{transition:none}
+ .grab{display:flex;justify-content:center;padding:8px 0 4px;cursor:grab}.grab i{width:38px;height:5px;border-radius:3px;background:rgba(60,50,40,.25)}
+ .pa-hd{align-items:center!important;flex-wrap:nowrap!important;gap:10px!important;min-height:48px;margin-bottom:10px!important}.pa-hd h1{font-size:16px!important;flex:none}.pa-hd span{flex:1;text-align:right;overflow:hidden;text-overflow:ellipsis}
+ .mplay{display:flex;flex:none;width:44px;height:44px;border-radius:50%;border:0;align-items:center;justify-content:center;background:var(--sage,#6f8a6a);color:#fff}.mplay .i{width:20px;height:20px}
+ #ctl .ib,#ctl .seg button,#ctl .chips span,#ctl .bt{min-height:44px}#ctl .ib{min-width:40px}
+ .rt-x a{padding:10px 0}
+ #ctl input[type=range]{height:32px}
+ #stop{max-width:calc(100vw - 24px)!important;width:min(340px,calc(100vw - 24px))!important}
+ #sign{transform:scale(.8);transform-origin:top center;top:calc(env(safe-area-inset-top) + 128px)!important}
+}
+@media (max-height:500px){ #ctl.pa{left:auto!important;width:min(380px,48vw)!important;right:calc(env(safe-area-inset-right) + 8px)!important;max-height:92vh!important} #stat{right:auto!important;width:min(420px,50vw)} #bar{right:calc(min(380px,48vw) + 16px + env(safe-area-inset-right))!important;bottom:12px!important}}
+</style></head><body>
+<div id="map"></div><canvas id="fx"></canvas>
+<div id="bar"><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
+<div id="legend"><span><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span><i style="background:#d50000"></i>已行驶</span><span><b style="background:#43a047"></b>可加油</span><span><b style="background:#ff9800"></b>服务区</span></div>
+<div id="ctl" class="pa">
+<div class="grab" id="grab"><i></i></div><div class="pa-hd"><button class="mplay" id="mplay" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><h1>自驾路线</h1><span id="psum" class="num"></span></div>
+<div class="rt">
+ <div class="rt-row s"><span class="rt-dot"></span><label class="rt-f"><small>起点</small><input id="from" value="秦皇岛" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="myloc" title="我的位置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button class="ib" data-pick="from" title="在地图上选起点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
+ <div id="vias"></div>
+ <div class="rt-row e"><span class="rt-dot"></span><label class="rt-f"><small>终点</small><input id="to" value="乌拉特后旗" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="swap" title="起终点互换"><svg class="i" viewBox="0 0 24 24"><path d="M8 4v16M8 4L4.5 7.5M8 4l3.5 3.5M16 20V4M16 20l-3.5-3.5M16 20l3.5-3.5"/></svg></button><button class="ib" data-pick="to" title="在地图上选终点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
+ <textarea id="via" style="display:none"></textarea>
+</div>
+<div class="rt-x"><a id="addvia"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>添加途经点</a><a data-pick="via" title="在地图上点选一个途经点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>在地图上选点</a><a id="geoset" title="地址搜索设置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></a></div>
+<div id="geobox" class="fold"><div class="fl"><span>天地图 key</span><input id="tdtk" placeholder="可选，留空用 OSM"></div><div class="hint">默认用免费的 OSM Nominatim + Photon；填写天地图 key 可提高国内地址精度。</div></div>
+<div class="pa-act"><button class="bt pri" id="plan"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 000-6H9a3 3 0 010-6h6.8"/></svg>规划路线</button><button class="bt ol" id="ret"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>返程</button></div>
+<div class="pa-sec"><div class="pa-sh"><span>播放</span></div>
+ <div class="pl"><div class="seg"><button id="play" title="开始"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="pause" title="暂停"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></svg></button><button id="reset" title="重置"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.2 8.2 0 00-6 2.7"/><path d="M5 3v4h4"/></svg></button></div><div class="chips num" id="chips"></div></div><select id="speed" style="display:none"><option value="10">10 km/秒</option><option value="25" selected>25 km/秒</option><option value="60">60 km/秒</option><option value="150">150 km/秒</option></select></div>
+<div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图注记</span></div></div>
+<div class="pa-sec"><div class="pa-sh"><span>镜头</span></div>
+ <label class="sw"><span>镜头跟随</span><input type="checkbox" id="follow" checked></label>
+ <div id="d3ctl"><div class="sl"><span>镜头远近</span><input id="dist" type="range" min="0" max="100" step="1" value="45"><span id="dv">45</span></div><div class="sl"><span>镜头俯仰</span><input id="pit" type="range" min="0" max="80" step="1" value="60"><span id="pv">60°</span></div><div class="sl"><span>地形夸张</span><input id="exag" type="range" min="0" max="3" step="0.1" value="1.5"><span id="exv">1.5×</span></div></div></div>
+<div class="pa-ft"><button class="bt ol2" data-fold="fnodes"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>自定义节点</span><em id="ncount" class="num"></em></button><button class="bt ol2" data-fold="fexp"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg><span>导出与分享</span></button></div>
+<div id="fnodes" class="fold">
+<div class="row"><button class="btn" id="nadd"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>地图添加</button><label style="display:contents"><button class="btn" onclick="this.nextElementSibling.click()"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 8"/></svg>上传照片</button><input id="nfile" type="file" accept="image/*" multiple style="display:none"></label></div>
+<div class="row"><button class="btn" id="nexp"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>导出 JSON</button><label style="display:contents"><button class="btn" onclick="this.nextElementSibling.click()"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>导入 JSON</button><input id="nimp" type="file" accept=".json,application/json" style="display:none"></label></div>
+<div id="nlist" style="margin-top:6px"></div></div>
+<div id="fexp" class="fold"><div class="hint kb">空格 播放/暂停 · R 重置 · H 隐藏面板 · +/− 镜头远近</div>
+<div class="row" style="margin:0 0 6px"><button class="btn" id="sumtxt"><svg class="i" viewBox="0 0 24 24"><path d="M6 3h9l4 4v14H6z"/><path d="M14 3v5h5M9 13h7M9 17h7"/></svg>行程单 TXT</button><button class="btn" id="sumpng"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 8"/></svg>行程单 PNG</button></div><button class="btn" id="rec" style="width:100%"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="8.5"/><circle cx="12" cy="12" r="3.5" fill="currentColor"/></svg>录制并导出视频</button><div class="hint">会请求“共享此标签页”，录完整段动画后自动下载。</div></div>
+<div id="msg" class="hint" style="min-height:0"></div>
+</div>
+<div id="ned"><b>编辑节点</b> <a id="ne_close" style="float:right">✕</a><div id="ne_warn" style="color:#c62828"></div>
+名称<input id="ne_title">说明（简短文字）<textarea id="ne_note" rows="3"></textarea>
+停留时间（秒）<input id="ne_dwell" type="number" min="1" max="120" value="5">图标<div id="ne_icons"></div>颜色 <input id="ne_color" type="color" value="#e91e63" style="width:60px">
+<div>照片 <label style="display:inline-block"><a onclick="this.nextElementSibling.click()">＋添加</a><input id="ne_add" type="file" accept="image/*" multiple style="display:none"></label></div><div id="ne_photos"></div>
+<button id="ne_save">保存</button> <button id="ne_del">删除节点</button></div>
+<div id="stat"><div class="sg"><div><div class="sk">已行驶</div><div class="sn"><b id="done">0</b><small>km</small></div></div><div><div class="sk">剩余</div><div class="sn"><b id="left">-</b><small>km</small></div></div><div><div class="sk">剩余时间</div><div class="sn sm"><span id="eta">-</span></div></div></div>
+<div class="pb"><i id="pbar"></i></div><div class="sx"><span>全程 <em id="tot">-</em> km</span><span>驾驶约 <em id="drv">-</em></span><span title="按路号识别的高速路段里程占比">高速 <em id="hwp">-</em></span></div>
+<div class="sx"><span>下一服务区 <em id="nsvc">-</em></span><span>下一加油 <em id="nfuel" style="color:#30d158">-</em></span></div><div id="where" class="sx sw2"></div></div>
+<div id="stop"><h3 id="stopName"></h3><div id="stopTags"></div><div id="stopBody"></div><div>停留中 <span id="cd">5</span> 秒…</div></div>
+<svg id="lead"><line id="leadL" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="5 4" opacity="0"/><circle id="leadC" r="5" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></svg><div id="sign"></div><div id="arrive"></div>
+<div id="mini"></div><canvas id="prof"></canvas>
+<script>
+const $=id=>document.getElementById(id), Q=new URLSearchParams(location.search);
+const GURL='https://mt{s}.google.com/vt/lyrs=y&hl=zh-CN&x={x}&y={y}&z={z}';
+const DEM='https://s3.amazonaws.com/elevation-tiles-prod/terrarium/{z}/{x}/{y}.png';
+const EMPTY={type:'FeatureCollection',features:[]};
+maplibregl.addProtocol('gcjh',async p=>{const [z,x,y]=p.url.replace('gcjh://','').split('/').map(Number);const cv=await GCJLBL.tile(x,y,z);const bl=await new Promise(r=>cv.toBlob(r,'image/png'));return {data:await bl.arrayBuffer()};});
+const map=new maplibregl.Map({container:'map',attributionControl:false,center:[113,40.6],zoom:5.5,pitch:45,maxPitch:85,preserveDrawingBuffer:!!Q.get('hide'),fadeDuration:0,pixelRatio:Math.min(matchMedia('(max-width:640px),(max-height:500px)').matches?1.5:2,devicePixelRatio||1),maxTileCacheSize:400,refreshExpiredTiles:false,
+ style:{version:8,sources:{
+  g:{type:'raster',tiles:[0,1,2,3].map(i=>GURL.replace('{s}',i).replace('lyrs=y','lyrs=s')),tileSize:256,maxzoom:20},lbl:{type:'raster',tiles:['gcjh://{z}/{x}/{y}'],tileSize:256,maxzoom:20},
+  esri:{type:'raster',tiles:[BM.U.esri],tileSize:256,maxzoom:18},eb:{type:'raster',tiles:[BM.U.eb],tileSize:256,maxzoom:18},et:{type:'raster',tiles:[BM.U.et],tileSize:256,maxzoom:18},
+  dem:{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:14},
+  dem2:{type:'raster-dem',tiles:[DEM],encoding:'terrarium',tileSize:256,maxzoom:14}},
+  layers:[{id:'g',type:'raster',source:'g',layout:{visibility:'none'}},{id:'esri',type:'raster',source:'esri',layout:{visibility:'none'}},{id:'hs',type:'hillshade',source:'dem2',paint:{'hillshade-exaggeration':0.25,'hillshade-shadow-color':'#1a1a2e','hillshade-highlight-color':'#fff8e1'}},{id:'lbl',type:'raster',source:'lbl',layout:{visibility:'none'}},{id:'et',type:'raster',source:'et',paint:{'raster-opacity':.85},layout:{visibility:'none'}},{id:'eb',type:'raster',source:'eb',layout:{visibility:'none'}}],
+  terrain:{source:'dem',exaggeration:matchMedia('(max-width:640px),(max-height:500px)').matches?0.8:1.5},
+  sky:{'sky-color':'#5fa8ff','horizon-color':'#dcecff','fog-color':'#e8f0ff','sky-horizon-blend':0.6,'horizon-fog-blend':0.6,'fog-ground-blend':0.85,'atmosphere-blend':['interpolate',['linear'],['zoom'],0,1,10,1,12,0]}}});
+map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-right');
+// Leaflet 兼容小工具，复用 2D 版业务逻辑
+map.latLngToContainerPoint=ll=>map.project([ll.lng??ll[1],ll.lat??ll[0]]);
+map.setView=(ll,z)=>map.jumpTo({center:[ll.lng??ll[1],ll.lat??ll[0]],zoom:z});
+window.gotoLL=(lat,lon,z)=>map.flyTo({center:[lon,lat],zoom:z,pitch:+$('pit').value,duration:1500});
+let mapReady=new Promise(r=>map.on('load',r));
+function applyBase(m){mapReady.then(()=>{const V=(id,on)=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility',on?'visible':'none');
+ if(m==='tdt'&&!map.getSource('tdt')){map.addSource('tdt',{type:'raster',tiles:[0,1,2,3,4,5,6,7].map(i=>BM.U.tdt(BM.key()).replace('{s}',i)),tileSize:256,maxzoom:18});map.addLayer({id:'tdt',type:'raster',source:'tdt'},map.getLayer('rd-c')?'rd-c':undefined);}
+ V('g',m==='google');V('lbl',m==='google');V('esri',m!=='google');V('et',m==='esri');V('eb',m==='esri');V('tdt',m==='tdt');});}
+const hwFC=[],GJ=(id,d)=>{const s=map.getSource(id);if(s)s.setData(d);};
+map.on('load',()=>{
+ for(const id of ['hw','rd','done','svc','nlink','car'])map.addSource(id,{type:'geojson',data:EMPTY});
+ map.addLayer({id:'rd-c',type:'line',source:'rd',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#002b36','line-width':['interpolate',['linear'],['zoom'],5,5,12,10],'line-opacity':.9}});
+ map.addLayer({id:'rd',type:'line',source:'rd',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#00e5ff','line-width':['interpolate',['linear'],['zoom'],5,2.8,12,6]}});
+ map.addLayer({id:'hw-c',type:'line',source:'hw',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#3e2723','line-width':['interpolate',['linear'],['zoom'],5,6,12,13],'line-opacity':.9}});
+ map.addLayer({id:'hw',type:'line',source:'hw',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#ff9800','line-width':['interpolate',['linear'],['zoom'],5,3.5,12,8]}});
+ map.addLayer({id:'done',type:'line',source:'done',layout:{'line-join':'round','line-cap':'round'},paint:{'line-color':'#d50000','line-width':['interpolate',['linear'],['zoom'],5,2.2,12,4.5]}});
+ map.addLayer({id:'nlink',type:'line',source:'nlink',paint:{'line-color':['get','c'],'line-width':2,'line-dasharray':[2,2]}});
+ map.addLayer({id:'svc',type:'circle',source:'svc',paint:{'circle-radius':4,'circle-color':['get','c'],'circle-stroke-color':'#fff','circle-stroke-width':1,'circle-pitch-alignment':'map'}});
+ map.addLayer({id:'car',type:'fill-extrusion',source:'car',paint:{'fill-extrusion-color':['get','c'],'fill-extrusion-base':['get','b'],'fill-extrusion-height':['get','h'],'fill-extrusion-opacity':1,'fill-extrusion-vertical-gradient':true}});
+});
+// ---- 3D 小汽车（fill-extrusion 拼装：车身/车窗/车顶/车轮/车灯，随缩放保持约 56px 车长）----
+const CARPARTS=[ // [前,后,左右半宽, 底, 顶, 颜色] 单位：车长L
+ [0.42,-0.42,0.27,0,0.002,'#000000'],
+ [0.36,0.24,0.25,0,0.11,'#111111'],[-0.24,-0.36,0.25,0,0.11,'#111111'],
+ [0.5,-0.5,0.22,0.04,0.17,'#e53935'],[0.47,0.40,0.23,0.04,0.155,'#e53935'],
+ [0.24,-0.30,0.19,0.17,0.30,'#263238'],[0.14,-0.24,0.18,0.30,0.32,'#c62828'],
+ [0.505,0.48,0.07,0.10,0.14,'#fff59d',0.13],[0.505,0.48,0.07,0.10,0.14,'#fff59d',-0.13],
+ [-0.48,-0.505,0.06,0.10,0.14,'#ff1744',0.15],[-0.48,-0.505,0.06,0.10,0.14,'#ff1744',-0.15]];
+let carLL=null;
+function carLen(){const lat=carLL?carLL[0]:40,fb=36*156543*Math.cos(lat*Math.PI/180)/2**map.getZoom();if(!carLL)return fb;
+ // 以“垂直于车头方向”的屏幕比例尺定车长：追尾视角下不被透视压缩，任何缩放/俯仰下车长约 36px
+ const h=heading*Math.PI/180,d=fb,k=111320,kc=k*Math.cos(lat*Math.PI/180),a=map.project([carLL[1],carLL[0]]),b=map.project([carLL[1]+Math.cos(h)*d/kc,carLL[0]-Math.sin(h)*d/k]);const px=Math.hypot(b.x-a.x,b.y-a.y);
+ return px>0.5&&isFinite(px)?Math.min(fb*4,Math.max(fb/4,36*d/px)):fb;}
+function updateCar(lat,lon){carLL=[lat,lon];const L_=carLen(),h=heading*Math.PI/180,sh=Math.sin(h),ch=Math.cos(h),k=111320,kc=k*Math.cos(lat*Math.PI/180);
+ const P=(f,r)=>[lon+(f*sh+r*ch)*L_/kc,lat+(f*ch-r*sh)*L_/k];
+ GJ('car',{type:'FeatureCollection',features:CARPARTS.map(([f1,f2,w,b,t,c,o=0])=>({type:'Feature',properties:{c,b:b*L_,h:t*L_},geometry:{type:'Polygon',coordinates:[[P(f1,o-w),P(f1,o+w),P(f2,o+w),P(f2,o-w),P(f1,o-w)]]}}))});}
+const car={setLatLng:p=>updateCar(p[0],p[1]),getLatLng:()=>({lat:carLL[0],lng:carLL[1]})};
+let camBear=0,camInit=false,camZ=11,camZv=0;
+const camBase=()=>14.6-6.6*(+$('dist').value/100);
+function camPad(){const H=innerHeight,W=innerWidth,vis=e=>e&&getComputedStyle(e).display!=='none'&&!e.classList.contains('hide');const c=$('ctl'),pr=$('prof');const mob=MOB();const rb=(mob?c.getBoundingClientRect().top:(vis(pr)?pr.getBoundingClientRect().top:H))-46,rt=mob?$('stat').getBoundingClientRect().bottom+12:60,R=Math.max(100,rb-rt);const l=!mob&&vis(c)&&!document.body.classList.contains('rec')?c.getBoundingClientRect().right+10:0;return {top:Math.round(rt+0.2*R),bottom:Math.round(H-rb),left:Math.round(Math.min(l,W*0.5)),right:0};}
+window.__cam={};window.__lastBase=null;addEventListener('resize',()=>{if(!playing&&camInit)map.easeTo({padding:camPad(),duration:300});});
+function hAt(d){const A=pointAt(d-0.15),B=pointAt(d+0.6);return Math.atan2((B[1]-A[1])*Math.cos(A[0]*Math.PI/180),B[0]-A[0])*180/Math.PI;}
+const mini=L.map('mini',{zoomControl:false,attributionControl:false,dragging:false,scrollWheelZoom:false,doubleClickZoom:false,boxZoom:false,keyboard:false,touchZoom:false});
+const miniL=L.layerGroup().addTo(mini);
+function applyMini(m){miniL.clearLayers();if(m==='google')miniL.addLayer(L.tileLayer(BM.U.googleY,{subdomains:'0123'}));else{miniL.addLayer(L.tileLayer(BM.U.esri,{maxNativeZoom:18}));miniL.addLayer(L.tileLayer(m==='tdt'?BM.U.tdt(BM.key()):BM.U.eb,{subdomains:'01234567',maxNativeZoom:18}));}}
+const MOB=()=>matchMedia('(max-width:640px),(max-height:500px)').matches;
+BM.init(m=>{applyBase(m);applyMini(m);});
+let coords=[],cum=[],total=0,duration=0,segs=[],runs=[],stops=[],doneLayer,carEl={style:{}},miniRoute,miniCar,stopMk=[],elev=[];
+let dist=0,v=0,playing=false,nextStop=0,lastT=0,stopTimer=null,onArrive=null,heading=0,runIdx=-1,arrived=false;
+const msg=t=>$('msg').textContent=t;
+$('tog').onclick=()=>{$('ctl').classList.toggle('hide');$('tog').lastChild.textContent=$('ctl').classList.contains('hide')?'显示设置':'隐藏设置';};
+function hav(a,b){const r=Math.PI/180,x=Math.sin((b[0]-a[0])*r/2)**2+Math.cos(a[0]*r)*Math.cos(b[0]*r)*Math.sin((b[1]-a[1])*r/2)**2;return 12742*Math.asin(Math.sqrt(x));}
+async function fetchT(url,opt={},ms=20000){const c=new AbortController();const t=setTimeout(()=>c.abort(),ms);try{const r=await fetch(url,{...opt,signal:c.signal});if(!r.ok)throw Error('HTTP '+r.status);return await r.json();}finally{clearTimeout(t);}}
+async function geocode(q){const p=ADDR.lookup(q);if(p)return p;const r=await ADDR.search(q);if(r.length)return [r[0].lat,r[0].lon];throw Error('无法定位：'+q);}
+async function osrm(pts){const s=pts.map(p=>p[1].toFixed(5)+','+p[0].toFixed(5)).join(';');
+ const d=await fetchT('https://router.project-osrm.org/route/v1/driving/'+s+'?overview=false&steps=true&geometries=geojson',{},30000);
+ if(d.code!=='Ok')throw Error('OSRM '+d.code);const r=d.routes[0];const c=[],sg=[];
+ for(const leg of r.legs)for(const st of leg.steps){let g=st.geometry.coordinates.map(x=>[x[1],x[0]]);if(c.length&&g.length&&g[0][0]===c[c.length-1][0]&&g[0][1]===c[c.length-1][1])g=g.slice(1);
+  const i0=Math.max(0,c.length-1);c.push(...g);sg.push({i0,i1:c.length-1,name:st.name||'',ref:st.ref||''});}
+ return {coords:c,duration:r.duration,segs:sg};}
+// ---- 道路分类与路名 ----
+const REFNAME={G1:'京哈高速',G6:'京藏高速',G7:'京新高速',G55:'二广高速',G59:'呼北高速',G2:'京沪高速',G4:'京港澳高速',G5:'京昆高速',G18:'荣乌高速',G25:'长深高速',G45:'大广高速',G95:'首都地区环线高速'};
+const ref1=s=>(s.ref||'').split(';')[0].trim();
+const isHw=s=>/高速|环$/.test(s.name)||/^[GS]\d{1,2}$|^[GS]\d{4}$/.test(ref1(s));
+function buildRuns(){runs=[];for(const s0 of segs){const r=ref1(s0);let nm=s0.name;if(/-.*高速公路$/.test(nm)&&REFNAME[r])nm=REFNAME[r];const s={...s0,name:nm};const pl=runs[runs.length-1];const key=REFNAME[r]?r:r+'|'+(nm||(pl&&pl.key.split('|')[0]===r?pl.key.split('|')[1]:''));const a=cum[s.i0],b=cum[s.i1];
+  if(REFNAME[r])s.name=REFNAME[r];const l=runs[runs.length-1];if(l&&(l.key===key||!key||b-a<3)){l.b=b;if(!l.name&&s.name&&key===l.key)l.name=s.name;continue;}
+  runs.push({key,ref:r,name:s.name||REFNAME[r]||'',hw:isHw(s),a,b});}
+ runs.forEach(r=>{if(r.ref&&REFNAME[r.ref]&&/高速公路$|^$/.test(r.name))r.name=REFNAME[r.ref];});}
+const OVS=['https://overpass-api.de/api/interpreter','https://overpass.kumi.systems/api/interpreter','https://overpass.private.coffee/api/interpreter','https://maps.mail.ru/osm/tools/overpass/api/interpreter'];
+async function overpass(q){let last;for(const u of OVS){try{msg('正在查询沿途服务区…');return (await fetchT(u,{method:'POST',body:'data='+encodeURIComponent(q),headers:{'Content-Type':'application/x-www-form-urlencoded'}},90000)).elements;}catch(e){last=e;}}throw last||Error('查询失败');}
+function ll(e){return [e.lat??e.center.lat,e.lon??e.center.lon];}
+async function liveServices(){const step=Math.max(1,Math.floor(coords.length/150));const pts=[];for(let i=0;i<coords.length;i+=step)pts.push(coords[i][0].toFixed(4)+','+coords[i][1].toFixed(4));
+ const el=await overpass('[out:json][timeout:150];nwr["highway"="services"](around:1500,'+pts.join(',')+');out center tags;');
+ const svc=el.map(e=>{const p=ll(e);return {name:(e.tags||{}).name,lat:p[0],lon:p[1],fuel:null};});
+ try{const fq=svc.map(s=>'nwr["amenity"="fuel"](around:300,'+s.lat+','+s.lon+');').join('');
+  const f=(await overpass('[out:json][timeout:150];('+fq+');out center;')).map(ll);svc.forEach(s=>s.fuel=f.some(p=>hav([s.lat,s.lon],p)<=0.3));}catch(e){}
+ return svc;}
+async function liveElev(){const es=[];const st=Math.max(1,Math.floor(coords.length/200));for(let i=0;i<coords.length;i+=st)es.push(coords[i]);es.push(coords[coords.length-1]);const out=[];
+ for(let i=0;i<es.length;i+=100){const ch=es.slice(i,i+100);const d=await fetchT('https://api.open-meteo.com/v1/elevation?latitude='+ch.map(p=>p[0].toFixed(4)).join(',')+'&longitude='+ch.map(p=>p[1].toFixed(4)).join(','));d.elevation.forEach((z,k)=>out.push([ch[k][0],ch[k][1],z]));}return out;}
+function cacheKey(f,t,v){const n=s=>s.replace(/市|区|县/g,'');f=n(f);t=n(t);v=v.map(n).join('>');
+ if(f==='秦皇岛'&&t==='乌拉特后旗'&&!v)return ['default',false];if(t==='秦皇岛'&&f==='乌拉特后旗'&&!v)return ['default',true];
+ if(f==='秦皇岛'&&t==='乌拉特后旗'&&v==='大同')return ['datong',false];if(t==='秦皇岛'&&f==='乌拉特后旗'&&v==='大同')return ['datong',true];return [null];}
+const CAR_SVG='<svg viewBox="0 0 44 44" width="44" height="44"><ellipse cx="22" cy="23" rx="11" ry="19" fill="rgba(0,0,0,.35)"/><rect x="12" y="4" width="20" height="36" rx="8" fill="#e53935" stroke="#7f0000" stroke-width="1.2"/><rect x="14.5" y="10" width="15" height="7" rx="2.5" fill="#263238"/><rect x="15" y="29" width="14" height="5" rx="2" fill="#263238"/><rect x="15" y="18" width="14" height="10" rx="2" fill="#c62828"/><rect x="13.5" y="4.5" width="4" height="2.5" rx="1" fill="#fff59d"/><rect x="26.5" y="4.5" width="4" height="2.5" rx="1" fill="#fff59d"/><rect x="13.5" y="37" width="4" height="2" fill="#ff1744"/><rect x="26.5" y="37" width="4" height="2" fill="#ff1744"/></svg>';
+function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push(cum[i-1]+hav(c[i-1],c[i]));total=cum[cum.length-1];duration=dur;
+ segs=sg&&sg.length?sg:[{i0:0,i1:c.length-1,name:'',ref:''}];buildRuns();
+ [miniRoute].forEach(l=>l&&l.remove());
+ const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}
+ const ML=a=>({type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:a.map(p=>p.map(q=>[q[1],q[0]]))}});GJ('hw',ML(hwC));GJ('rd',ML(rdC));
+ doneLayer={setLatLngs:a=>{const st=Math.max(1,Math.floor(a.length/1500)),o=[];for(let i=0;i<a.length-1;i+=st)o.push([a[i][1],a[i][0]]);const l=a[a.length-1];if(l)o.push([l[1],l[0]]);GJ('done',{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:o.length>1?o:[[0,0],[0,0]]}});}};
+ miniRoute=L.polyline(c,{color:'#ff1744',weight:2}).addTo(mini);mini.fitBounds(miniRoute.getBounds(),{padding:[8,8]});
+ {let b=new maplibregl.LngLatBounds();c.forEach(q=>b.extend([q[1],q[0]]));map.fitBounds(b,{padding:{top:70,bottom:170,right:60,left:MOB()?24:$('ctl').classList.contains('hide')?50:$('ctl').getBoundingClientRect().right+30,...(MOB()?{top:$('stat').getBoundingClientRect().bottom+20,bottom:innerHeight-$('ctl').getBoundingClientRect().top+20,right:24}:{})},pitch:45,bearing:0,duration:0});camInit=false;}
+ if(!miniCar)miniCar=L.circleMarker(c[0],{radius:5,color:'#fff',fillColor:'#ffeb3b',fillOpacity:1}).addTo(mini);
+ $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=[];resetAnim();ADDR.routeSet(c[0],c[c.length-1]);}
+function project(lat,lon){let best=1e9,bi=0;for(let i=0;i<coords.length;i+=2){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {off:best,along:cum[bi]};}
+let lastSvc=[],lastFb=false;function buildStops(list,isFallback){lastSvc=list;lastFb=!!isFallback;svcMk.forEach(m=>m.remove());svcMk=[];let arr=[];
+ for(const s of list){const p=project(s.lat,s.lon);if(p.off>2||p.along<10||total-p.along<10)continue;arr.push({...s,along:p.along});}
+ arr.sort((a,b)=>a.along-b.along);
+ const m=[];for(const s of arr){const l=m[m.length-1];if(l&&s.along-l.along<3){l.fuel=l.fuel||s.fuel;if(!l.name&&s.name)l.name=s.name;}else m.push({...s});}
+ m.forEach(s=>{s.label=s.name?s.name.replace(/\s*[\(（].*?方向[\)）]/,''):'服务区';});
+ GJ('svc',{type:'FeatureCollection',features:m.map(s=>({type:'Feature',properties:{c:s.fuel?'#43a047':'#ff9800'},geometry:{type:'Point',coordinates:[s.lon,s.lat]}}))});
+ const named=m.filter(s=>s.name);const cand=named.length?named:m;const minGap=Math.max(50,total/14);const out=[];for(const s of cand){if(!out.length||s.along-out[out.length-1].along>=minGap)out.push(s);}
+ svcStops=out.map(s=>({...s,fallback:!!isFallback}));
+ svcStops.forEach(s=>{const e=document.createElement('div');e.title=s.label+(s.fuel?'（可加油）':'');e.innerHTML='<div class="pulse" style="position:relative;background:'+(s.fallback?'#9e9e9e':(s.fuel?'#43a047':'#ff9800'))+'"></div>';const mk=new maplibregl.Marker({element:e}).setLngLat([s.lon,s.lat]).addTo(map);svcMk.push(mk);s.mk=mk;});
+ svcAll=m.filter(s=>!isFallback);rebuildStops();$('where').textContent=(isFallback?'未找到服务区，改为途经点 ':'服务区 '+m.length+' 处，停靠 ')+svcStops.length+' 处'+(nodes.length?' · 自定义 '+nodes.length:'');}
+function markNext(){stops.forEach((s,i)=>{const e=s.mk&&s.mk.getElement();if(e&&e.firstChild&&e.firstChild.classList)e.firstChild.classList.toggle('next',i===nextStop);});}
+async function fallbackStops(){const n=Math.max(3,Math.min(10,Math.round(total/130)));const out=[];
+ for(let k=1;k<=n;k++){const p=pointAt(total*k/(n+1));let name='途经点'+k;
+  try{const d=await fetchT('https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=zh&lat='+p[0]+'&lon='+p[1]);const a=d.address||{};name=(a.county||a.city||a.town||a.state||name);}catch(e){}
+  out.push({name:'途经点（非服务区）· '+name+'附近',lat:p[0],lon:p[1],fuel:null});await new Promise(r=>setTimeout(r,1100));}return out;}
+function revSegs(sg,N){return sg.map(s=>({...s,i0:N-1-s.i1,i1:N-1-s.i0})).reverse();}
+async function plan(){const f=$('from').value.trim(),t=$('to').value.trim(),v=$('via').value.split(/\n|,|，/).map(s=>s.trim()).filter(Boolean);
+ pause();msg('正在定位与规划路线…');const [key,rev]=cacheKey(f,t,v);const C=key&&window.CACHE&&CACHE[key];
+ let ok=false;try{if(C&&!Q.get('live'))throw 0;const pts=[];for(const q of [f,...v,t])pts.push(await geocode(q));const r=await osrm(pts);setRoute(r.coords,r.duration,r.segs);ok=true;}
+ catch(e){if(C){const c=rev?[...C.coords].reverse():C.coords;setRoute(c,C.duration,rev?revSegs(C.segs,c.length):C.segs);}else{msg('路线规划失败：'+e.message);return;}}
+ if(C){buildStops(C.services);elev=rev?[...C.elev].reverse():C.elev;drawProf();msg('');return;}
+ try{elev=await liveElev();drawProf();}catch(e){}
+ try{const s=await liveServices();if(!s.length)throw Error('无服务区');buildStops(s);msg('');}
+ catch(e){msg('服务区查询失败，改为均匀途经点…');buildStops(await fallbackStops(),true);msg('注意：停靠点不是服务区（服务区数据暂不可用）');}}
+function pointAt(d){d=Math.max(0,Math.min(total,d));let lo=0,hi=cum.length-1;while(lo<hi){const m=(lo+hi)>>1;if(cum[m]<d)lo=m+1;else hi=m;}const i=Math.max(1,lo);const f=Math.min(1,Math.max(0,(d-cum[i-1])/((cum[i]-cum[i-1])||1)));
+ return [coords[i-1][0]+(coords[i][0]-coords[i-1][0])*f,coords[i-1][1]+(coords[i][1]-coords[i-1][1])*f,i];}
+let elevCum=[];
+function smoothElev(){elev.forEach((e,i)=>{if(i&&i<elev.length-1){const a=[elev[i-1][2],e[2],elev[i+1][2]].sort((x,y)=>x-y);e[3]=a[1];}else e[3]=e[2];});}
+let profBg=null;
+let profSz=null;function drawProf(full){const cv=$('prof');if(!cv.clientWidth||!cv.clientHeight){profSz=null;return;}if(!profSz||full){const dpr=Math.min(2,devicePixelRatio||1);profSz=[cv.clientWidth,cv.clientHeight,dpr];cv.width=profSz[0]*dpr;cv.height=profSz[1]*dpr;profBg=null;}const [W,H,dpr]=profSz,g=cv.getContext('2d');g.setTransform(dpr,0,0,dpr,0,0);
+ if(!elev.length){g.clearRect(0,0,W,H);g.fillStyle='#ccc';g.fillText('暂无高程数据',10,20);return;}
+ if(elevCum.src!==elev){smoothElev();elevCum=[0];for(let i=1;i<elev.length;i++)elevCum.push(elevCum[i-1]+hav(elev[i-1],elev[i]));elevCum.src=elev;profBg=null;}
+ const k=total/elevCum[elevCum.length-1];const zs=elev.map(e=>e[3]),mn=Math.min(...zs),mx=Math.max(...zs);const X=d=>40+(W-50)*d/total,Y=z=>H-18-(H-40)*(z-mn)/((mx-mn)||1);
+ if(!profBg||full){g.clearRect(0,0,W,H);g.beginPath();g.moveTo(X(0),H-18);elev.forEach((e,i)=>g.lineTo(X(elevCum[i]*k),Y(e[3])));g.lineTo(X(total),H-18);{const gr=g.createLinearGradient(0,14,0,H-18);gr.addColorStop(0,'rgba(125,155,129,.8)');gr.addColorStop(1,'rgba(125,155,129,.08)');g.fillStyle=gr;g.fill();g.strokeStyle='rgba(175,200,170,.9)';g.lineWidth=1.2;g.stroke();}
+  g.fillStyle='rgba(255,255,255,.86)';g.font='600 11.5px "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Noto Sans CJK SC",sans-serif';g.fillText('海拔剖面  '+Math.round(mn)+'–'+Math.round(mx)+' m',45,14);g.fillText(Math.round(mx)+'m',2,Y(mx)+4);g.fillText(Math.round(mn)+'m',2,Y(mn));g.fillText('0',X(0),H-4);g.fillText(total.toFixed(0)+' km',X(total)-45,H-4);
+  stops.forEach(s=>{g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});profBg=g.getImageData(0,0,W,H);}
+ else{g.setTransform(1,0,0,1,0,0);g.putImageData(profBg,0,0);g.setTransform(dpr,0,0,dpr,0,0);}
+ g.beginPath();let di=0;for(let i=0;i<elev.length;i++){if(elevCum[i]*k>dist)break;g.lineTo(X(elevCum[i]*k),Y(elev[i][3]));di=i;}g.strokeStyle='#d07a5c';g.lineWidth=2.2;g.stroke();
+ const cz=elev[di][3];g.beginPath();g.arc(X(dist),Y(cz),5,0,7);g.fillStyle='#e6c27a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();g.font='600 11.5px sans-serif';g.fillText('当前 '+Math.round(cz)+' m',Math.min(X(dist)+8,W-80),Math.max(Y(cz)-8,26));}
+function fmtH(s){s=Math.round(s/60)*60;const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h+'时'+m+'分';}
+let svcAll=[];let lastUi=0,doneArr=[],doneIdx=0;const TXT={};function setT(id,v){if(TXT[id]!==v){TXT[id]=v;$(id).textContent=v;}}
+function updDone(p){if(p[2]<doneIdx||!doneArr.length){doneArr=[];doneIdx=0;}else doneArr.pop();while(doneIdx<p[2])doneArr.push(coords[doneIdx++]);doneArr.push([p[0],p[1]]);doneLayer.setLatLngs(doneArr);}
+function updateUI(now){const p=pointAt(dist);car.setLatLng([p[0],p[1]]);
+ const force=now===1e12;if(!force&&now-lastUi<100&&playing)return p;lastUi=force?performance.now():now;miniCar.setLatLng([p[0],p[1]]);updDone(p);
+ setT('done',dist.toFixed(1));setT('left',Math.max(0,total-dist).toFixed(1));setT('eta',fmtH(duration*(1-dist/total)));
+ const pr=total?dist/total:0;if(Math.abs(pr-(updateUI.pr||-1))>0.0005){updateUI.pr=pr;$('pbar').style.transform='scaleX('+pr.toFixed(4)+')';}
+ const ns=svcAll.find(s=>s.along>dist+0.05),nf=svcAll.find(s=>s.fuel&&s.along>dist+0.05);setT('nsvc',ns?(ns.along-dist).toFixed(0)+' km':'—');setT('nfuel',nf?(nf.along-dist).toFixed(0)+' km':'—');
+ drawProf();return p;}
+function resetAnim(){pause();camInit=false;doneArr=[];doneIdx=0;dist=0;v=0;nextStop=0;runIdx=-1;arrived=false;window.__arrived=false;$('arrive').classList.remove('on');confetti.length=0;clearStop();markNext();if(car&&coords.length){updateUI(1e12);heading=targetHeading();camBear=heading;updateCar(...pointAt(0).slice(0,2));}}
+function pause(){playing=false;document.body.classList.remove('playing');engine(0,true);}
+// ---- 朝向 ----
+function targetHeading(){const A=pointAt(dist-0.15),B=pointAt(dist+0.6);let dy=B[0]-A[0],dx=(B[1]-A[1])*Math.cos(A[0]*Math.PI/180);if(Math.hypot(dx,dy)<1e-6){const C=pointAt(dist-1),E=pointAt(dist+3);dy=E[0]-C[0];dx=(E[1]-C[1])*Math.cos(C[0]*Math.PI/180);}return Math.atan2(dx,dy)*180/Math.PI;}
+function targetHeading2D(){const a=map.latLngToContainerPoint(pointAt(dist-0.15).slice(0,2)),b=map.latLngToContainerPoint(pointAt(dist+0.6).slice(0,2));if(Math.hypot(b.x-a.x,b.y-a.y)<0.5){const c=pointAt(dist-1),e=pointAt(dist+3);const A=map.latLngToContainerPoint(c.slice(0,2)),B=map.latLngToContainerPoint(e.slice(0,2));return Math.atan2(B.x-A.x,-(B.y-A.y))*180/Math.PI;}return Math.atan2(b.x-a.x,-(b.y-a.y))*180/Math.PI;}
+// ---- 粒子：尾气 & 彩带 ----
+const fx=$('fx'),fg=fx.getContext('2d');let parts=[],confetti=[];function rs(){fx.width=innerWidth;fx.height=innerHeight;profSz=null;}rs();addEventListener('resize',()=>{rs();drawProf(true);});
+// 尾气粒子对象池（无逐帧分配），预渲染柔和烟团贴图
+const POOL=Array.from({length:180},()=>({on:0,x:0,y:0,vx:0,vy:0,r:0,life:0,max:1}));let nPart=0,fxDirty=false;
+const PUFF=(()=>{const c=document.createElement('canvas');c.width=c.height=64;const g=c.getContext('2d'),gr=g.createRadialGradient(32,32,0,32,32,32);gr.addColorStop(0,'rgba(215,215,215,1)');gr.addColorStop(.55,'rgba(200,200,200,.45)');gr.addColorStop(1,'rgba(190,190,190,0)');g.fillStyle=gr;g.fillRect(0,0,64,64);return c;})();
+function emit(cp,rate,dt){const n=rate*dt;let k=Math.floor(n)+(Math.random()<n%1?1:0);const r=(heading-map.getBearing())*Math.PI/180,bx=-Math.sin(r),by=Math.cos(r)*Math.cos(map.getPitch()*Math.PI/180*0.8);
+ for(let i=0;i<POOL.length&&k>0;i++){const p=POOL[i];if(p.on)continue;k--;nPart++;p.on=1;p.x=cp.x+bx*26+(Math.random()-.5)*6;p.y=cp.y+by*26+(Math.random()-.5)*6;p.vx=bx*(18+Math.random()*20)+(Math.random()-.5)*14;p.vy=by*(18+Math.random()*20)+(Math.random()-.5)*14-6;p.r=3;p.life=0;p.max=0.9+Math.random()*0.6;}}
+function drawFx(dt){if(!nPart&&!confetti.length){if(fxDirty){fg.clearRect(0,0,fx.width,fx.height);fxDirty=false;}return;}fxDirty=true;fg.clearRect(0,0,fx.width,fx.height);const dm=Math.pow(0.96,dt*60);
+ for(let i=0;i<POOL.length;i++){const p=POOL[i];if(!p.on)continue;p.life+=dt;if(p.life>=p.max){p.on=0;nPart--;continue;}p.x+=p.vx*dt;p.y+=p.vy*dt;p.vx*=dm;p.vy*=dm;p.r+=dt*10;fg.globalAlpha=0.5*(1-p.life/p.max);fg.drawImage(PUFF,p.x-p.r*1.6,p.y-p.r*1.6,p.r*3.2,p.r*3.2);}fg.globalAlpha=1;
+ for(const c of confetti){c.life+=dt;c.vy+=160*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.vr*dt;fg.save();fg.translate(c.x,c.y);fg.rotate(c.rot);fg.globalAlpha=Math.max(0,1-c.life/4.5);fg.fillStyle=c.col;fg.fillRect(-5,-3,10,6);fg.restore();}
+ confetti=confetti.filter(c=>c.life<4.5);}
+function celebrate(){const cols=['#f44336','#ffeb3b','#4caf50','#2196f3','#ff9800','#e91e63'];for(let i=0;i<220;i++)confetti.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*0.4,vx:(Math.random()-.5)*700,vy:-200-Math.random()*450,rot:Math.random()*6,vr:(Math.random()-.5)*12,col:cols[i%6],life:0});
+ $('arrive').textContent='🎉 抵达终点：'+$('to').value+'！全程 '+total.toFixed(0)+' km';$('arrive').classList.add('on');}
+// ---- 引擎声（WebAudio合成）----
+let AC=null,eng=null,muted=false;window.__log=[];
+function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();const o1=AC.createOscillator(),o2=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain(),m=AC.createGain();
+ o1.type='sawtooth';o2.type='square';lp.type='lowpass';lp.frequency.value=500;g.gain.value=0;m.gain.value=muted?0:1;o1.connect(lp);o2.connect(lp);lp.connect(g);g.connect(m);m.connect(AC.destination);o1.start();o2.start();eng={o1,o2,g,m,lp};}catch(e){}}
+function engine(r,idle){if(!eng)return;const t=AC.currentTime,f=idle?32:38+70*r;eng.o1.frequency.setTargetAtTime(f,t,0.15);eng.o2.frequency.setTargetAtTime(f*0.5,t,0.15);eng.lp.frequency.setTargetAtTime(350+900*r,t,0.2);eng.g.gain.setTargetAtTime(playing?(idle?0.03:0.04+0.05*r):0,t,0.2);}
+$('mute').onclick=()=>{muted=!muted;if(eng)eng.m.gain.value=muted?0:1;$('mute').lastChild.textContent=muted?'声音关':'声音开';$('mute').style.opacity=muted?.55:1;};
+// ---- 路牌 ----
+let signT=null;function showSign(r){const vm=+$('speed').value;const ms=(5-2*Math.min(1,vm/150))*1000;const s=$('sign');
+ const sh=r.ref?'<span class="sh" style="background:'+(/^G/.test(r.ref)?'#d32f2f':/^S/.test(r.ref)?'#f9a825':'#455a64')+'">'+r.ref+'</span>':'';
+ s.style.background=r.hw?'#4f7a5a':'#4a6b8a';s.innerHTML=sh+'<span>'+(r.name||(r.hw?'高速公路':/^G\d{3}/.test(r.ref)?'国道':/^S\d{3}/.test(r.ref)?'省道':'普通道路'))+'</span>';s.classList.add('on');clearTimeout(signT);signT=setTimeout(()=>s.classList.remove('on'),ms);}
+// ---- 主循环 ----
+let fpsN=0,fpsT=0;window.__fps=[];
+function frame(t){const dt=Math.min(.25,Math.max(0,(t-lastT)/1000));lastT=t;fpsN++;if(t-fpsT>1000){window.__fps.push(fpsN*1000/(t-fpsT));fpsN=0;fpsT=t;}
+ const vmax=+$('speed').value,acc=vmax/1.5,NS=Math.max(1,Math.ceil(dt/0.017));
+ for(let si=0;si<NS;si++){const dt0=dt;{const dt=dt0/NS;
+ if(playing&&!stopTimer&&!arrived){const target=nextStop<stops.length?stops[nextStop].along:total;const rem=target-dist;
+  const allow=Math.sqrt(2*acc*Math.max(0,rem));v=Math.min(v+acc*dt,vmax,Math.max(allow,vmax*0.04));let nd=dist+v*dt;
+  if(nd>=target){dist=target;v=0;if(nextStop<stops.length){updateUI(1e12);showStop(stops[nextStop]);nextStop++;markNext();}else{arrived=true;playing=false;document.body.classList.remove('playing');updateUI(1e12);window.__arrived=true;engine(0,true);celebrate();$('where').textContent='🏁 已到达终点：'+$('to').value;if(onArrive)onArrive();}}
+  else dist=nd;
+  let ri=runIdx;if(!(ri>=0&&runs[ri]&&dist>=runs[ri].a&&dist<runs[ri].b))ri=runs.findIndex(r=>dist>=r.a&&dist<r.b);if(ri>=0&&ri!==runIdx){runIdx=ri;if(runs[ri].b-runs[ri].a>3&&!stopTimer)showSign(runs[ri]);}
+  }}}engine(playing?v/vmax:0,!!stopTimer);
+ if(coords.length&&car){const p=updateUI(t);
+  if(v>0.01||!playing){const th=targetHeading();const d=((th-heading+540)%360)-180;heading+=d*Math.min(1,dt*7);}
+  updateCar(p[0],p[1]);
+  if(playing&&$('follow').checked){camInit=true;
+   const vm=+$('speed').value,sp=Math.min(1,v/Math.max(1,vm)),Wk=Math.max(3,vm*0.9),h0=hAt(dist);let cv=0;for(let k=1;k<=4;k++){cv=Math.max(cv,Math.abs(((hAt(dist+Wk*k/4)-h0+540)%360)-180));}cv=Math.min(1,cv/70);
+   const ns=nextStop<stops.length?stops[nextStop].along-dist:1e9,ap=Math.max(0,Math.min(1,1-ns/Math.max(6,vm*1.6)));const hw=runs[runIdx]&&runs[runIdx].hw;
+   const base=camBase(),tz=stopTimer?base+1.1:base-(hw?0.7:0.35)*sp*(1-cv)+0.8*cv+1.0*ap+0.1*Math.sin(t*0.00027);
+   camZv+=(6*(tz-camZ)-4.9*camZv)*dt;camZ+=camZv*dt;Object.assign(__cam,{base,tz,camZ});
+   if(stopTimer)camBear+=dt*7;else{const d=((heading-camBear+540)%360)-180;camBear+=d*Math.min(1,dt*(1.1+cv));}
+   const ahead=0,la=pointAt(dist+ahead);
+   const c=map.getCenter(),k=Math.min(1,dt*(stopTimer?1.5:6)),tp=Math.min(85,+$('pit').value+2.5*Math.sin(t*0.0004)-6*ap);
+   map.jumpTo({center:[c.lng+(la[1]-c.lng)*k,c.lat+(la[0]-c.lat)*k],zoom:camZ,bearing:camBear+2.5*Math.sin(t*0.00021),pitch:map.getPitch()+(tp-map.getPitch())*Math.min(1,dt*1.5),padding:camPad()});}
+  const cp=map.latLngToContainerPoint([p[0],p[1]]);if(playing)emit(cp,stopTimer?6:10+30*v/vmax,dt);}
+ edgeWatch(t);drawFx(dt);if(stopTimer)drawLead();
+ if(Math.random()<0.25)window.__log.push([performance.now(),playing?v/vmax:0,stopTimer?1:0]);
+ requestAnimationFrame(frame);}
+requestAnimationFrame(t=>{lastT=t;fpsT=t;frame(t);});
+function play(keep){initAudio();if(AC&&AC.state==='suspended')AC.resume();if(!coords.length||playing)return;if(!keep&&(arrived||dist>=total))resetAnim();playing=true;document.body.classList.add('playing');
+ if($('follow').checked){camBear=heading;camInit=true;map.jumpTo({center:[carLL[1],carLL[0]],zoom:(camZ=camBase(),window.__lastBase=camZ,camZv=0,camZ),pitch:+$('pit').value,bearing:heading,padding:camPad()});}}
+// ---- 图片素材 ----
+const BAD=/车站|站$|铁路|线$|公路|高速|国道|大桥|机场|学校|大学|中学|医院|公司|大厦|广场|小区|街道|镇$|乡$|村$|列表|行政区/;
+const GOOD=/风景|名胜|景区|旅游|文物保护|世界遗产|寺|庙|古城|古镇|长城|关隘|石窟|陵|墓|遗址|湖|山|河|草原|沙漠|湿地|森林|公园|民俗|非物质文化遗产|博物馆|塔|楼阁/;
+const imgCache={};
+async function wikiCurate(lat,lon){const k=lat.toFixed(1)+','+lon.toFixed(1);if(k in imgCache)return imgCache[k];let res=null;
+ try{const W='https://zh.wikipedia.org/w/api.php?origin=*&format=json&action=query&';
+  const d=await fetchT(W+'generator=geosearch&ggscoord='+lat+'|'+lon+'&ggsradius=10000&ggslimit=30&prop=pageimages|categories|extracts&exintro=1&explaintext=1&exsentences=2&cllimit=max&piprop=thumbnail&pithumbsize=640',{},10000);
+  const pages=Object.values((d.query||{}).pages||{}).filter(p=>p.thumbnail&&!/\.svg|map|Map|locator|Location/i.test(p.thumbnail.source)&&!BAD.test(p.title));
+  const sc=p=>{const cats=(p.categories||[]).map(c=>c.title).join(' ');return (GOOD.test(cats)?2:0)+(GOOD.test(p.title)?1:0)-(BAD.test(cats)?3:0);};
+  pages.sort((a,b)=>sc(b)-sc(a));if(pages[0]&&sc(pages[0])>=2)res={t:pages[0].title,img:pages[0].thumbnail.source,intro:(pages[0].extract||'').slice(0,120),cr:'图文：维基百科'};}catch(e){}
+ return imgCache[k]=res;}
+function curated(s){let b=null,bd=1e9;for(const r of REGIONS){const d=hav([s.lat,s.lon],[r.lat,r.lon]);if(d<bd){bd=d;b=r;}}for(const r of REGIONS){if(r.rad){const d=hav([s.lat,s.lon],[r.lat,r.lon]);if(d<=r.rad&&bd>70){bd=d;b=r;}}}return bd<=(b.rad||70)?{...b,t:'附近名胜 · '+b.t+'（距此约 '+Math.round(bd)+' km）',cr:'图片：Wikimedia Commons'}:null;}
+function clearStop(){$('stop').classList.remove('on');stopTimer=null;$('leadL').setAttribute('opacity',0);$('leadC').setAttribute('opacity',0);}
+// ---- 卡片智能定位：避开小车、附近路线与其它面板 ----
+function obstacles(){return ['stat','ctl','mini','prof','bar','legend','sign','ned'].map(id=>$(id)).filter(e=>e&&e.offsetParent!==null&&getComputedStyle(e).display!=='none'&&!e.classList.contains('hide')).map(e=>e.getBoundingClientRect()).filter(r=>r.width>0);}
+function routePix(near){const pts=[],W=innerWidth,H=innerHeight,st=Math.max(0.7,total/2000);for(let d=0;d<=total;d+=st){const isN=Math.abs(d-dist)<=70;if(near&&!isN)continue;const q=pointAt(d);const c=map.latLngToContainerPoint([q[0],q[1]]);if(c.x<-20||c.y<-20||c.x>W+20||c.y>H+20)continue;pts.push([c.x,c.y,isN?1:0.15]);}return pts;}
+function ovl(a,b){const w=Math.min(a.r,b.right)-Math.max(a.l,b.left),h=Math.min(a.b,b.bottom)-Math.max(a.t,b.top);return w>0&&h>0?w*h:0;}
+function evalRect(R,car,pts,obs){const pad=30;const inCar=car[0]>R.l-pad&&car[0]<R.r+pad&&car[1]>R.t-pad&&car[1]<R.b+pad;let rp=0;for(const p of pts)if(p[0]>R.l-8&&p[0]<R.r+8&&p[1]>R.t-8&&p[1]<R.b+8)rp+=p[2];let ob=0;for(const o of obs)ob+=ovl(R,o);return {inCar,rp,ob};}
+function placeCard(pan){const el=$('stop');if(!stopTimer)return;const W=innerWidth,H=innerHeight,w=el.offsetWidth,h=el.offsetHeight;
+ const p=pointAt(dist),cp=map.latLngToContainerPoint([p[0],p[1]]),car0=[cp.x,cp.y],pts0=routePix(),obs=obstacles();const m=10,g=50;
+ const shifts=false?[[0,0],[0,.2],[0,-.2],[.18,0],[-.18,0],[.15,.18],[-.15,.18],[.15,-.18],[-.15,-.18],[0,.3],[0,-.3]]:[[0,0]];
+ let best=null,bs=1e18;
+ for(const [fx,fy] of shifts){const dx=fx*W,dy=fy*H,car=[car0[0]+dx,car0[1]+dy];
+  if(car[0]<40||car[0]>W-40||car[1]<40||car[1]>H-40)continue;if(obs.some(o=>car[0]>o.left-20&&car[0]<o.right+20&&car[1]>o.top-20&&car[1]<o.bottom+20))continue;
+  const pts=pts0.map(q=>[q[0]+dx,q[1]+dy,q[2]]);
+  const xs=[m,(W-w)/2,W-w-m,car[0]-w/2,car[0]+g,car[0]-g-w],ys=[m,(H-h)/2,H-h-m,car[1]-h/2,car[1]+g,car[1]-g-h];
+  for(const x of xs)for(const y of ys){const l=Math.max(m,Math.min(W-w-m,x)),t=Math.max(m,Math.min(H-h-m,y));const R={l,t,r:l+w,b:t+h};
+   const e=evalRect(R,car,pts,obs);const sc=(e.inCar?1e9:0)+e.rp*400+e.ob*2+Math.hypot((l+w/2)-car[0],(t+h/2)-car[1])*0.4+Math.hypot(dx,dy)*1.5;
+   if(sc<bs){bs=sc;best={...R,...e,dx,dy,car};}}}
+ if(!best)return;if(best.dx||best.dy)map.panBy([-best.dx,-best.dy],{animate:true,duration:.5});
+ el.style.left=best.l+'px';el.style.top=best.t+'px';window.__card=best;}
+function drawLead(){const el=$('stop');if(!stopTimer){return;}const C0=window.__card,r=C0?{left:C0.l,right:C0.r,top:C0.t,bottom:C0.b}:el.getBoundingClientRect(),p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]);
+ const x=Math.max(r.left,Math.min(r.right,c.x)),y=Math.max(r.top,Math.min(r.bottom,c.y));const L=$('leadL');L.setAttribute('x1',x);L.setAttribute('y1',y);L.setAttribute('x2',c.x);L.setAttribute('y2',c.y);L.setAttribute('opacity',.9);
+ const C=$('leadC');C.setAttribute('cx',c.x);C.setAttribute('cy',c.y);C.setAttribute('r',24);C.setAttribute('opacity',.9);}
+async function showStop(s){let cd=window.__resumeCd??(s.node?s.dwell:5);window.__resumeCd=null;window.__cd=cd;$('sign').classList.remove('on');stopTimer=true;$('stopName').textContent=(s.fallback?'📍 ':'🅿 ')+s.label;
+ $('stopTags').innerHTML=(s.fuel?'<span class="tag" style="background:#43a047">⛽ 可加油</span>':(s.fallback?'':'<span style="font-size:12px;color:#888">未知是否可加油</span>'))+' <span style="font-size:12px;color:#666">已行驶 '+s.along.toFixed(0)+' km</span>';
+ $('cd').textContent=cd;$('stopBody').innerHTML='<div style="height:180px;line-height:180px;color:#888">加载中…</div>';$('stop').classList.add('on');placeCard(true);
+ let slide=null;const iv=setInterval(()=>{if(!playing)return;cd--;window.__cd=cd;$('cd').textContent=cd;placeCard(false);if(cd<=0){clearInterval(iv);clearInterval(slide);clearStop();}},1000);
+ if(s.node){const n=s.node;$('stopName').textContent='📍 '+(n.title||'自定义节点');$('stopTags').innerHTML=(n.off>0.3?'<span style="font-size:12px;color:#666">拍摄点距路线 '+n.off.toFixed(1)+' km · </span>':'')+'<span style="font-size:12px;color:#666">已行驶 '+s.along.toFixed(0)+' km</span>';
+  const ph=n.photos;let k=0;const draw=()=>{$('stopBody').innerHTML=(ph.length?'<img src="'+ph[k]+'">'+(ph.length>1?'<div class="thumbs">'+ph.map((p,i)=>'<img src="'+p+'" class="'+(i===k?'cur':'')+'">').join('')+'</div>':''):'')+(n.note?'<div class="intro">'+n.note.replace(/</g,'&lt;')+'</div>':'');};
+  draw();placeCard(true);if(ph.length>1)slide=setInterval(()=>{k=(k+1)%ph.length;draw();},Math.max(1500,n.dwell*1000/ph.length));return;}
+ let it=curated(s);if(!it)it=await wikiCurate(s.lat,s.lon);
+ $('stopBody').innerHTML=it?'<img src="'+it.img+'" referrerpolicy="no-referrer"><div class="t">'+it.t+'</div><div class="intro">'+it.intro+'</div><div class="cr">'+it.cr+'</div>':'<div class="intro">（附近未找到可靠的地理文化素材，不显示图片）</div>';placeCard(true);}
+// ---- 自定义节点 ----
+const ICONS={camera:['相机','<path d="M4 8h3l2-3h6l2 3h3v11H4z" fill="none" stroke="#fff" stroke-width="2"/><circle cx="12" cy="13" r="3.5" fill="none" stroke="#fff" stroke-width="2"/>'],
+flag:['旗帜','<path d="M6 21V4M6 4h11l-2 4 2 4H6" fill="none" stroke="#fff" stroke-width="2"/>'],
+mountain:['山','<path d="M2 19l7-11 4 6 3-4 6 9z" fill="#fff"/>'],
+food:['美食','<path d="M7 3v8M5 3v5a2 2 0 004 0V3M7 11v10M16 3c-2 2-2 7 0 8v10" fill="none" stroke="#fff" stroke-width="2"/>'],
+hotel:['住宿','<path d="M3 18V7M3 14h18v4M21 14v-3a3 3 0 00-3-3h-7v6" fill="none" stroke="#fff" stroke-width="2"/><circle cx="7" cy="11" r="2" fill="#fff"/>'],
+fuel:['加油','<path d="M5 21V5a2 2 0 012-2h6a2 2 0 012 2v16M4 21h12M7 7h6v4H7zM15 9l3 3v6a1.5 1.5 0 003 0V9l-3-3" fill="none" stroke="#fff" stroke-width="2"/>'],
+scenic:['景点','<path d="M12 3l3 6H9zM12 8l4 7H8zM11 15h2v5h-2z" fill="#fff"/>'],
+star:['收藏','<path d="M12 2l3 7 7 .6-5.3 4.7 1.6 7L12 17.6 5.7 21.3l1.6-7L2 9.6 9 9z" fill="#fff"/>'],
+tent:['露营','<path d="M12 4L2 20h20zM12 4v16M9 20l3-6 3 6" fill="none" stroke="#fff" stroke-width="2"/>'],
+mine:['矿区','<path d="M4 7c4-4 12-4 16 0M12 5v16" fill="none" stroke="#fff" stroke-width="2.4"/><path d="M9 21h6" stroke="#fff" stroke-width="2"/>'],
+water:['水体','<path d="M12 3c4 5 6 8 6 11a6 6 0 01-12 0c0-3 2-6 6-11z" fill="#fff"/>'],
+home:['家','<path d="M3 11l9-8 9 8M6 9v11h12V9" fill="none" stroke="#fff" stroke-width="2"/>'],
+info:['信息','<circle cx="12" cy="12" r="9" fill="none" stroke="#fff" stroke-width="2"/><path d="M12 10v7M12 7v.5" stroke="#fff" stroke-width="2.4"/>'],
+heart:['喜爱','<path d="M12 20s-8-5-8-11a4 4 0 018-1 4 4 0 018 1c0 6-8 11-8 11z" fill="#fff"/>']};
+const pinHtml=(ic,col)=>'<svg viewBox="0 0 36 46" width="32" height="41"><path d="M18 45C18 45 2 28 2 17a16 16 0 0132 0c0 11-16 28-16 28z" fill="'+col+'" stroke="#fff" stroke-width="2"/><g transform="translate(6 5)">'+(ICONS[ic]||ICONS.flag)[1]+'</g></svg>';
+let svcMk=[],nodeMk=[],nodes=[],svcStops=[],addMode=null,pendingFiles=null;
+function snapInfo(lat,lon){if(!coords.length)return {along:0,off:0,lat,lon};let best=1e9,bi=0;for(let i=0;i<coords.length;i++){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {along:cum[bi],off:best,lat:coords[bi][0],lon:coords[bi][1]};}
+function rebuildStops(){nodeMk.forEach(m=>m.remove());nodeMk=[];const ns=[],lk=[];
+ for(const n of nodes){const si=snapInfo(n.lat,n.lon);n.along=si.along;n.off=si.off;
+  const e=document.createElement('div');e.className='mk3';e.innerHTML=pinHtml(n.icon,n.color);e.title=(n.title||'自定义节点')+(n.off>5?'（距路线 '+n.off.toFixed(1)+' km）':'');e.onclick=ev=>{ev.stopPropagation();editNode(n.id);};
+  const mk=new maplibregl.Marker({element:e,anchor:'bottom'}).setLngLat([n.lon,n.lat]).addTo(map);nodeMk.push(mk);
+  if(n.off>0.05)lk.push({type:'Feature',properties:{c:n.color},geometry:{type:'LineString',coordinates:[[n.lon,n.lat],[si.lon,si.lat]]}});
+  if(si.along>0.5&&si.along<total-0.5)ns.push({node:n,label:n.title||'自定义节点',along:si.along,lat:si.lat,lon:si.lon,mk,dwell:n.dwell});}
+ GJ('nlink',{type:'FeatureCollection',features:lk});stops=[...svcStops,...ns].sort((a,b)=>a.along-b.along);
+ if(!playing&&dist===0)nextStop=0;else nextStop=stops.findIndex(s=>s.along>dist+0.01);if(nextStop<0)nextStop=stops.length;
+ markNext();renderList();profBg=null;}
+function renderList(){const nc=$('ncount');if(nc)nc.textContent=nodes.length?'· '+nodes.length:'';$('nlist').innerHTML=nodes.length?nodes.map(n=>'<div class="ni"><span style="display:inline-block;transform:scale(.55);transform-origin:left center;width:20px;height:24px">'+pinHtml(n.icon,n.color)+'</span><span style="flex:1">'+(n.title||'自定义节点')+' · '+(n.along||0).toFixed(0)+'km · '+n.dwell+'s · '+n.photos.length+'图'+(n.off>5?' <b style="color:#c62828">⚠'+n.off.toFixed(1)+'km</b>':'')+'</span><a onclick="gotoLL('+n.lat+','+n.lon+',12)">定位</a> <a onclick="editNode(\''+n.id+'\')">编辑</a> <a onclick="delNode(\''+n.id+'\')">删除</a></div>').join(''):'<div style="color:#888">（暂无，点“在地图上添加”或上传带GPS的照片）</div>';}
+// IndexedDB
+function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
+async function saveNodes(){try{const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(JSON.parse(JSON.stringify(nodes.map(({along,off,...n})=>n))),'nodes');}catch(e){}}
+async function loadNodes(){try{const db=await idb();return await new Promise(r=>{const q=db.transaction('kv').objectStore('kv').get('nodes');q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);});}catch(e){return [];}}
+// 图片压缩
+function compress(file,max=1280,q=0.8){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q));};im.onerror=rej;im.src=u;});}
+const uid=()=>Math.random().toString(36).slice(2,10);
+function newNode(lat,lon,photos=[]){const n={id:uid(),lat,lon,title:'',note:'',dwell:5,icon:'camera',color:'#e91e63',photos};nodes.push(n);rebuildStops();saveNodes();return n;}
+window.delNode=id=>{if(!confirm('删除该节点？'))return;nodes=nodes.filter(n=>n.id!==id);rebuildStops();saveNodes();$('ned').style.display='none';};
+window.editNode=id=>{const n=nodes.find(x=>x.id===id);if(!n)return;$('ned').dataset.id=id;$('ne_title').value=n.title;$('ne_note').value=n.note;$('ne_dwell').value=n.dwell;$('ne_color').value=n.color;
+ $('ne_icons').innerHTML=Object.entries(ICONS).map(([k,v])=>'<span class="icb'+(k===n.icon?' sel':'')+'" data-k="'+k+'" title="'+v[0]+'">'+pinHtml(k,n.color)+'<br>'+v[0]+'</span>').join('');
+ $('ne_icons').querySelectorAll('.icb').forEach(e=>e.onclick=()=>{$('ne_icons').querySelectorAll('.icb').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');});
+ $('ne_photos').innerHTML=n.photos.map((p,i)=>'<span class="th"><img src="'+p+'"><a onclick="rmPhoto(\''+id+'\','+i+')">✕</a></span>').join('');
+ $('ne_warn').textContent=n.off>5?'⚠ 拍摄点距路线 '+n.off.toFixed(1)+' km，停靠点已吸附到最近路线点':'';$('ned').style.display='block';};
+window.rmPhoto=(id,i)=>{const n=nodes.find(x=>x.id===id);n.photos.splice(i,1);saveNodes();editNode(id);renderList();};
+function bindNodeUI(){
+ $('nadd').onclick=()=>{addMode={type:'click'};msg('请在地图上点击要添加节点的位置');map.getContainer().style.cursor='crosshair';};
+ map.on('click',e=>{if(!addMode)return;const m=addMode;addMode=null;map.getContainer().style.cursor='';msg('');
+  const si=snapInfo(e.lngLat.lat,e.lngLat.lng);const n=m.type==='click'?newNode(si.lat,si.lon):newNode(e.lngLat.lat,e.lngLat.lng,m.photos);editNode(n.id);});
+ $('nfile').onchange=async e=>{await handlePhotos([...e.target.files]);e.target.value='';};
+ $('ne_add').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
+ $('ne_save').onclick=()=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);n.title=$('ne_title').value.trim();n.note=$('ne_note').value.trim();n.dwell=Math.max(1,Math.min(120,+$('ne_dwell').value||5));n.color=$('ne_color').value;const s=$('ne_icons').querySelector('.sel');if(s)n.icon=s.dataset.k;$('ned').style.display='none';rebuildStops();saveNodes();};
+ $('ne_del').onclick=()=>delNode($('ned').dataset.id);$('ne_close').onclick=()=>$('ned').style.display='none';
+ $('nexp').onclick=()=>{const b=new Blob([JSON.stringify({version:1,nodes:nodes.map(({along,off,...n})=>n)})],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='自驾节点.json';a.click();};
+ $('nimp').onchange=async e=>{const f=e.target.files[0];if(!f)return;importNodes(await f.text());e.target.value='';};}
+window.importNodes=(txt,replace)=>{const d=typeof txt==='string'?JSON.parse(txt):txt;const arr=(d.nodes||d).map(n=>({id:n.id||uid(),lat:+n.lat,lon:+n.lon,title:n.title||'',note:n.note||'',dwell:+n.dwell||5,icon:n.icon||'flag',color:n.color||'#e91e63',photos:n.photos||[]}));
+ if(replace)nodes=arr;else{const ids=new Set(nodes.map(n=>n.id));nodes.push(...arr.filter(n=>!ids.has(n.id)));}rebuildStops();saveNodes();msg('已导入 '+arr.length+' 个节点');return arr.length;};
+async function handlePhotos(files){const withGps=[],noGps=[];
+ for(const f of files){let g=null;try{g=await exifr.gps(f);}catch(e){}const img=await compress(f);if(g&&isFinite(g.latitude))withGps.push({lat:g.latitude,lon:g.longitude,img,name:f.name});else noGps.push(img);}
+ // 300m 内的照片合并为一个节点
+ const groups=[];for(const p of withGps){const g=groups.find(g=>hav([g.lat,g.lon],[p.lat,p.lon])<0.3);if(g)g.photos.push(p.img);else groups.push({lat:p.lat,lon:p.lon,photos:[p.img],name:p.name});}
+ const warns=[];let last=null;for(const g of groups){const n=newNode(g.lat,g.lon,g.photos);n.title=g.name.replace(/\.[^.]+$/,'');if(n.off>5)warns.push(n.title+' 距路线 '+n.off.toFixed(1)+' km');last=n;}
+ rebuildStops();saveNodes();
+ let m='已根据照片GPS创建 '+groups.length+' 个节点';if(warns.length)m+='；⚠ '+warns.join('，')+'（停靠点吸附到最近路线点）';
+ if(noGps.length){addMode={type:'photo',photos:noGps};map.getContainer().style.cursor='crosshair';m+='；'+noGps.length+' 张照片无GPS，请在地图上点击放置位置';}
+ msg(m);if(groups.length&&!noGps.length)gotoLL(last.lat,last.lon,11);window.__lastUpload={groups:groups.length,noGps:noGps.length,warns};return window.__lastUpload;}
+
+// ---- 交互 ----
+function tripLines(){const L=[],via=$('via').value.split('\n').map(x=>x.trim()).filter(Boolean);
+ L.push('自驾行程单');L.push('起点：'+$('from').value);if(via.length)L.push('途经：'+via.join(' → '));L.push('终点：'+$('to').value);
+ L.push('全程：'+total.toFixed(1)+' km　预计驾驶：'+fmtH(duration)+'（OSRM 估算，不含停留）');L.push('高速路段：约 '+(window.__hwKm||0).toFixed(0)+' km（'+(total?Math.round((window.__hwKm||0)/total*100):0)+'%，按路号识别；收费信息：数据源未提供）');
+ L.push('');L.push('停靠点（共 '+stops.length+' 处）：');let pv=0;stops.forEach((s,i)=>{L.push((i+1)+'. '+(s.node?'[自定义] ':'')+s.label+'　里程 '+s.along.toFixed(0)+' km（距上一站 '+(s.along-pv).toFixed(0)+' km）'+(s.fuel?'　可加油':s.node||s.fallback?'':'　加油未知'));pv=s.along;});
+ L.push('终点距最后一站 '+(total-pv).toFixed(0)+' km');const f=svcAll.filter(s=>s.fuel);if(f.length){let mg=0,pa=0;for(const s of f){mg=Math.max(mg,s.along-pa);pa=s.along;}mg=Math.max(mg,total-pa);L.push('沿途可加油服务区 '+f.length+' 处，最长加油间隔约 '+mg.toFixed(0)+' km');}
+ L.push('');L.push('数据：路线 OSRM / 服务区与加油 OpenStreetMap · 生成于 '+new Date().toLocaleString('zh-CN'));return L;}
+function dl(blob,name){const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),4000);}
+$('sumtxt').onclick=()=>dl(new Blob([tripLines().join('\r\n')],{type:'text/plain;charset=utf-8'}),'自驾行程单.txt');
+$('sumpng').onclick=()=>{const L=tripLines(),W=820,lh=26,H=120+L.length*lh,c=document.createElement('canvas'),d=2;c.width=W*d;c.height=H*d;const g=c.getContext('2d');g.scale(d,d);
+ const gr=g.createLinearGradient(0,0,W,0);gr.addColorStop(0,'#0a84ff');gr.addColorStop(1,'#5e5ce6');g.fillStyle='#f5f5f7';g.fillRect(0,0,W,H);g.fillStyle=gr;g.fillRect(0,0,W,84);
+ const F="'PingFang SC','Microsoft YaHei UI','Microsoft YaHei',sans-serif";g.fillStyle='#fff';g.font='700 28px '+F;g.fillText(L[0],32,52);g.font='500 14px '+F;g.globalAlpha=.85;g.fillText($('from').value+' → '+$('to').value+' · '+total.toFixed(0)+' km',32,74);g.globalAlpha=1;
+ L.slice(1).forEach((t,i)=>{const y=118+i*lh;g.font=(/^\d+\./.test(t)?'400 14px ':/^(全程|起点|终点|途经|停靠)/.test(t)?'600 15px ':'400 13px ')+F;g.fillStyle=/可加油/.test(t)?'#1d1d1f':/^数据/.test(t)?'#86868b':'#1d1d1f';g.fillText(t.replace('　可加油',''),32,y);if(/可加油$/.test(t)){const w=g.measureText(t.replace('　可加油','')).width;g.fillStyle='#34c759';g.beginPath();g.roundRect(44+w,y-15,52,20,10);g.fill();g.fillStyle='#fff';g.font='600 12px '+F;g.fillText('可加油',50+w,y);}});
+ c.toBlob(b=>dl(b,'自驾行程单.png'),'image/png');};
+addEventListener('keydown',e=>{if(/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)||e.ctrlKey||e.metaKey||e.altKey)return;const k=e.key;
+ if(k===' '){e.preventDefault();playing?pause():play();}else if(k==='r'||k==='R')resetAnim();else if(k==='h'||k==='H')$('tog').click();
+ else if(k==='+'||k==='='||k==='-'||k==='_'){const s=$('dist');if(s&&s.offsetParent){s.value=Math.max(0,Math.min(100,+s.value+(k==='+'||k==='='?-10:10)));s.dispatchEvent(new Event('input'));}else (k==='+'||k==='=')?map.zoomIn():map.zoomOut();}});
+$('plan').onclick=plan;$('play').onclick=()=>play();$('pause').onclick=pause;$('reset').onclick=resetAnim;
+function swap(){const a=$('from').value;$('from').value=$('to').value;$('to').value=a;$('via').value=$('via').value.split('\n').reverse().join('\n');}
+$('swap').onclick=()=>{swap();plan();};
+$('ret').onclick=async()=>{swap();await plan();play();};
+$('rec').onclick=async()=>{try{initAudio();const st=await navigator.mediaDevices.getDisplayMedia({video:{frameRate:30},audio:true,preferCurrentTab:true,selfBrowserSurface:'include'});
+ if(AC){const dst=AC.createMediaStreamDestination();eng.m.connect(dst);dst.stream.getAudioTracks().forEach(t=>st.addTrack(t));}
+ const mt=['video/mp4;codecs=avc1,mp4a.40.2','video/webm;codecs=vp9,opus','video/webm'].find(t=>MediaRecorder.isTypeSupported(t));const rec=new MediaRecorder(st,{mimeType:mt,videoBitsPerSecond:6e6});const ch=[];
+ rec.ondataavailable=e=>ch.push(e.data);rec.onstop=()=>{st.getTracks().forEach(t=>t.stop());const b=new Blob(ch,{type:mt});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='自驾动画.'+(mt.includes('mp4')?'mp4':'webm');a.click();document.body.classList.remove('rec');};
+ document.body.classList.add('rec');resetAnim();onArrive=()=>{onArrive=null;setTimeout(()=>rec.stop(),4000);};rec.start(1000);setTimeout(play,800);}
+ catch(e){msg('录制失败或被取消：'+e.message);}};
+window.__app={tripLines,get svcAll(){return svcAll},get nodes(){return nodes},handlePhotos,get stops(){return stops},get total(){return total},get dist(){return dist},get runs(){return runs},get heading(){return heading},map,get car3d(){return carLL},carPx(){const a=map.project([carLL[1],carLL[0]]),h=heading*Math.PI/180,L_=carLen(),k=111320,kc=k*Math.cos(carLL[0]*Math.PI/180);const b=map.project([carLL[1]+Math.sin(h)*L_/kc,carLL[0]+Math.cos(h)*L_/k]);return Math.hypot(b.x-a.x,b.y-a.y);},play,plan};
+if(Q.get('speed'))$('speed').innerHTML+='<option value="'+Q.get('speed')+'" selected>'+Q.get('speed')+' km/秒</option>';
+if(Q.get('via'))$('via').value=Q.get('via');
+if(Q.get('hide')){$('ctl').classList.add('hide');$('bar').style.display='none';}
+const PINC={from:'#34c759',to:'#ff3b30'};
+window.MAPAPI={addPin(kind,lat,lon,onEnd){const e=document.createElement('div');e.title=kind==='from'?'起点（可拖动）':'终点（可拖动）';e.innerHTML='<svg viewBox="0 0 28 38" width="28" height="38"><path d="M14 37S2 23 2 13.5a12 12 0 0124 0C26 23 14 37 14 37z" fill="'+PINC[kind]+'" stroke="#fff" stroke-width="2"/><circle cx="14" cy="13.5" r="4.5" fill="#fff"/></svg>';
+ const m=new maplibregl.Marker({element:e,anchor:'bottom',draggable:true}).setLngLat([lon,lat]).addTo(map);m.on('dragend',()=>{const p=m.getLngLat();onEnd(p.lat,p.lng);});return {setLatLng:(a,b)=>m.setLngLat([b,a])};},
+ onClick(cb){map.on('click',e=>cb(e.lngLat.lat,e.lngLat.lng));},setCursor(c){map.getCanvas().style.cursor=c;},flyTo(a,b,z){map.flyTo({center:[b,a],zoom:z,duration:1200});}};
+// ---- 设计 A：途经点多行、速度胶囊、折叠区 ----
+const VIA=$('via'),VD=Object.getOwnPropertyDescriptor(HTMLTextAreaElement.prototype,'value');let viaEmpty=0;
+Object.defineProperty(VIA,'value',{get(){return VD.get.call(this);},set(v){VD.set.call(this,v);renderVia();}});
+const ICX='<svg class="i" viewBox="0 0 24 24"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+function renderVia(){const ls=VD.get.call(VIA).split('\n').map(x=>x.trim()).filter(Boolean),box=$('vias');box.innerHTML='';
+ [...ls,...Array(viaEmpty).fill('')].forEach(v=>{const r=document.createElement('div');r.className='rt-row v';r.innerHTML='<span class="rt-dot"></span><label class="rt-f"><small>途经</small><input placeholder="途经地名或地址"></label><span class="rt-a"><button class="ib rm" title="移除途经点">'+ICX+'</button></span>';
+  const inp=r.querySelector('input');inp.value=v;inp.addEventListener('input',syncVia);inp.addEventListener('change',syncVia);ADDR.bindInput(inp);
+  r.querySelector('.rm').onclick=()=>{r.remove();syncVia();};box.appendChild(r);});}
+function syncVia(){const ins=[...document.querySelectorAll('#vias input')];viaEmpty=ins.filter(i=>!i.value.trim()).length;VD.set.call(VIA,ins.map(i=>i.value.trim()).filter(Boolean).join('\n'));}
+$('addvia').onclick=()=>{viaEmpty++;renderVia();const ins=document.querySelectorAll('#vias input');ins[ins.length-1].focus();};
+let chipV=null;function renderChips(){const sel=$('speed');if(chipV===sel.value&&$('chips').childElementCount===sel.options.length)return;chipV=sel.value;
+ $('chips').innerHTML=[...sel.options].map(o=>'<span data-v="'+o.value+'" title="'+o.textContent+'" class="'+(o.value===sel.value?'on':'')+'">'+o.value+'×</span>').join('');
+ $('chips').querySelectorAll('span').forEach(e=>e.onclick=()=>{sel.value=e.dataset.v;sel.dispatchEvent(new Event('change'));renderChips();});}
+setInterval(renderChips,300);
+document.querySelectorAll('[data-fold]').forEach(b=>b.onclick=()=>{const f=$(b.dataset.fold),on=!f.classList.contains('on');document.querySelectorAll('.pa-ft .bt').forEach(x=>{x.classList.remove('on');$(x.dataset.fold).classList.remove('on');});if(on){f.classList.add('on');b.classList.add('on');}});
+$('geoset').onclick=()=>$('geobox').classList.toggle('on');
+ADDR.init();renderVia();renderChips();
+// ---- 2D/3D 无缝切换：sessionStorage 交接完整状态 ----
+const ZOFF=1;// MapLibre 缩放级 = Leaflet 缩放级 - 1
+function saveState(){try{const c=map.getCenter(),st={t:Date.now(),coords,duration,segs,svc:lastSvc,fb:lastFb,elev,from:$('from').value,to:$('to').value,via:$('via').value,pick:ADDR.PICK,
+ dist,v,heading,playing,arrived,stop:!!stopTimer,stopIdx:nextStop-1,cd:window.__cd,speed:$('speed').value,follow:$('follow').checked,hidden:$('ctl').classList.contains('hide'),muted,
+ view:{lat:c.lat,lng:c.lng,z:map.getZoom()+ZOFF},sl:['dist','pit','exag'].filter(id=>$(id)).map(id=>[id,$(id).value])};sessionStorage.setItem('dm_state',JSON.stringify(st));}catch(e){console.warn('saveState',e);}}
+$('sw').addEventListener('click',saveState);
+let RESTORE=null;try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');sessionStorage.removeItem('dm_state');if(r&&Date.now()-r.t<10*60e3&&r.coords&&r.coords.length)RESTORE=r;}catch(e){}
+function restoreRoute(st){$('from').value=st.from;$('to').value=st.to;$('via').value=st.via;Object.assign(ADDR.PICK,st.pick||{});
+ if(![...$('speed').options].some(o=>o.value===st.speed))$('speed').innerHTML+='<option value="'+st.speed+'">'+st.speed+' km/秒</option>';$('speed').value=st.speed;$('follow').checked=st.follow;
+ for(const [id,v] of st.sl||[])if($(id)){$(id).value=v;$(id).dispatchEvent(new Event('input'));}
+ setRoute(st.coords,st.duration,st.segs);buildStops(st.svc,st.fb);elev=st.elev||[];drawProf(true);}
+function restoreRuntime(st){window.__restoredFrom=st.dist;if(st.hidden&&!$('ctl').classList.contains('hide'))$('tog').click();if(st.muted&&!muted)$('mute').click();
+ map.setView([st.view.lat,st.view.lng],st.view.z-ZOFF);dist=st.dist;heading=st.heading||0;
+ if(st.arrived){dist=total;nextStop=stops.length;arrived=true;updateUI(1e12);window.__restored=true;return;}
+ nextStop=stops.findIndex(s=>s.along>dist+0.01);if(nextStop<0)nextStop=stops.length;
+ if(st.stop&&stops[st.stopIdx]){dist=stops[st.stopIdx].along;nextStop=st.stopIdx+1;}markNext();updateUI(1e12);
+ if(st.playing){v=st.v||0;play(true);if(st.stop&&stops[st.stopIdx]){window.__resumeCd=Math.max(1,st.cd||1);showStop(stops[st.stopIdx]);}}
+ else if(st.stop&&stops[st.stopIdx]){window.__resumeCd=Math.max(1,st.cd||1);showStop(stops[st.stopIdx]);}
+ window.__restored=true;}
+// 浏览器拦截无手势的声音：首次交互时恢复，并给出轻提示
+function audioHint(){if(!AC||AC.state!=='suspended'||muted)return;const h=document.createElement('div');h.id='ahint';h.textContent='点击任意处恢复声音';document.body.appendChild(h);
+ const go=()=>{AC.resume();h.remove();removeEventListener('pointerdown',go,true);removeEventListener('keydown',go,true);};addEventListener('pointerdown',go,true);addEventListener('keydown',go,true);}
+// ---- 跟随关闭时：小车接近可视区边缘，平滑平移回中部（用户操作后 3 秒内不干预）----
+let lastUser=-1e9,panUntil=0;['pointerdown','wheel','touchstart'].forEach(ev=>$('map').addEventListener(ev,()=>{lastUser=performance.now();},{passive:true}));
+function clearArea(){const W=innerWidth,H=innerHeight,vis=e=>e&&e.offsetParent!==null&&getComputedStyle(e).display!=='none'&&!e.classList.contains('hide');const c=$('ctl'),pr=$('prof');
+ const l=vis(c)?c.getBoundingClientRect().right+8:0,b=vis(pr)?pr.getBoundingClientRect().top-8:H;return {l,t:56,r:W,b};}
+let edgeT=0;function edgeWatch(now){if(!playing||$('follow').checked||now-edgeT<200||now<panUntil||now-lastUser<3000||!coords.length)return;edgeT=now;
+ const A=clearArea(),p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),mx=(A.r-A.l)*0.12,my=(A.b-A.t)*0.12;
+ if(c.x<A.l+mx||c.x>A.r-mx||c.y<A.t+my||c.y>A.b-my||!isFinite(c.x)){const dx=c.x-(A.l+A.r)/2,dy=c.y-(A.t+A.b)/2;panUntil=now+1100;panCar(dx,dy);window.__recenters=(window.__recenters||0)+1;}}
+function panCar(dx,dy){map.panBy([dx,dy],{duration:900,easing:t=>1-Math.pow(1-t,3)});}
+$('sw').href='index.html'+location.search;$('exag').oninput=e=>{$('exv').textContent=e.target.value+'×';map.setTerrain(+e.target.value>0?{source:'dem',exaggeration:+e.target.value}:null);};$('pit').oninput=e=>{$('pv').textContent=e.target.value+'°';if(!playing)map.easeTo({pitch:+e.target.value});};
+$('dist').oninput=e=>{$('dv').textContent=e.target.value;const nb=camBase();camZ+=nb-(window.__lastBase??nb);window.__lastBase=nb;if(!playing)map.easeTo({zoom:camBase(),padding:camPad(),duration:400});};
+$('tog').addEventListener('click',()=>{if(!playing&&camInit)map.easeTo({padding:camPad(),duration:300});});
+if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.__ready=mapReady.then(loadNodes).then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}return plan();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
+</script>
+<script>
+// 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
+(()=>{const c=$('ctl'),g=$('grab'),hd=c.querySelector('.pa-hd');let y0=null,t0=0,dy=0;
+ const open=v=>{document.body.classList.toggle('sheet',v);if(!v)c.scrollTop=0;};window.__sheet=open;
+ let lt=0;const st=e=>{if(e.touches)lt=1;else if(lt)return;if(!MOB())return;y0=e.touches?e.touches[0].clientY:e.clientY;t0=Date.now();dy=0;c.classList.add('drag');};
+ const mv=e=>{if(y0==null)return;dy=(e.touches?e.touches[0].clientY:e.clientY)-y0;const op=document.body.classList.contains('sheet');const base=op?0:c.offsetHeight-parseFloat(getComputedStyle(c).getPropertyValue('--peek')||76);if(op&&c.scrollTop>0)return;c.style.transform='translateY('+Math.max(0,base+dy)+'px)';};
+ const en=e=>{if(y0==null)return;if(!e.changedTouches&&lt)return;c.classList.remove('drag');c.style.transform='';const op=document.body.classList.contains('sheet');if(Math.abs(dy)<10&&Date.now()-t0<1500){if(!(e.target.closest&&e.target.closest('button')))open(!op);}else if(dy<-40)open(true);else if(dy>40)open(false);y0=null;};
+ [g,hd].forEach(el=>{el.addEventListener('touchstart',st,{passive:true});el.addEventListener('touchmove',mv,{passive:true});el.addEventListener('touchend',en);el.addEventListener('mousedown',st);});
+ addEventListener('mousemove',mv);addEventListener('mouseup',en);
+ $('mplay').onclick=e=>{e.stopPropagation();(playing?$('pause'):$('play')).click();};
+ setInterval(()=>{$('mplay').innerHTML=playing?'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3"/></svg>':'<svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';},300);
+ const unlock=()=>{try{initAudio();AC&&AC.resume&&AC.resume();}catch(_){}};addEventListener('touchend',unlock,{once:true,passive:true});
+ if(MOB())$('mute').title='声音（轻触屏幕后可播放）';
+})();
+</script></body></html>
