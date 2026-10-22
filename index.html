@@ -359,10 +359,21 @@ let profSz=null;function drawProf(full){const cv=$('prof');if(!cv.clientWidth||!
  const k=total/elevCum[elevCum.length-1];const zs=elev.map(e=>e[3]),mn=Math.min(...zs),mx=Math.max(...zs);const X=d=>40+(W-50)*d/total,Y=z=>H-18-(H-40)*(z-mn)/((mx-mn)||1);
  if(!profBg||full){g.clearRect(0,0,W,H);g.beginPath();g.moveTo(X(0),H-18);elev.forEach((e,i)=>g.lineTo(X(elevCum[i]*k),Y(e[3])));g.lineTo(X(total),H-18);{const gr=g.createLinearGradient(0,14,0,H-18);gr.addColorStop(0,'rgba(125,155,129,.8)');gr.addColorStop(1,'rgba(125,155,129,.08)');g.fillStyle=gr;g.fill();g.strokeStyle='rgba(175,200,170,.9)';g.lineWidth=1.2;g.stroke();}
   g.fillStyle='rgba(255,255,255,.86)';g.font='600 11.5px "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Noto Sans CJK SC",sans-serif';g.fillText('海拔剖面  '+Math.round(mn)+'–'+Math.round(mx)+' m',45,14);g.fillText(Math.round(mx)+'m',2,Y(mx)+4);g.fillText(Math.round(mn)+'m',2,Y(mn));g.fillText('0',X(0),H-4);g.fillText(total.toFixed(0)+' km',X(total)-45,H-4);
-  stops.forEach(s=>{g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});profBg=g.getImageData(0,0,W,H);}
+  stops.forEach(s=>{g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});{window.__profKeys=[];const N=Math.max(20,Math.min(elev.length,Math.floor((W-50)/3))),pts=[];for(let j=0;j<N;j++){const i=Math.round(j*(elev.length-1)/(N-1));pts.push([elevCum[i]*k,elev[i][3]]);}
+  const rng=(mx-mn)||1,thr=Math.max(120,rng*0.18),cand=[];
+  const prom=(j,up)=>{let a=Infinity,b=Infinity;const z=pts[j][1];for(let q=j-1;q>=0;q--){const d=up?z-pts[q][1]:pts[q][1]-z;if(d<0)break;a=Math.min(a,Infinity);}let l=z,r=z;for(let q=j-1;q>=0;q--){if(up?pts[q][1]>z:pts[q][1]<z)break;l=up?Math.min(l,pts[q][1]):Math.max(l,pts[q][1]);}for(let q=j+1;q<N;q++){if(up?pts[q][1]>z:pts[q][1]<z)break;r=up?Math.min(r,pts[q][1]):Math.max(r,pts[q][1]);}return up?z-Math.max(l,r):Math.min(l,r)-z;};
+  for(let j=1;j<N-1;j++){const z=pts[j][1];if(z>=pts[j-1][1]&&z>pts[j+1][1]){const p=prom(j,true);if(p>=thr)cand.push([p,j,1]);}else if(z<=pts[j-1][1]&&z<pts[j+1][1]){const p=prom(j,false);if(p>=thr)cand.push([p,j,0]);}}
+  let jx=0,jn=0;pts.forEach((p,j)=>{if(p[1]>pts[jx][1])jx=j;if(p[1]<pts[jn][1])jn=j;});cand.push([1e9,jx,1],[1e9-1,jn,0]);cand.sort((a,b)=>b[0]-a[0]);
+  const boxes=[[40,0,W,18],[0,H-16,W,H]],ov=(a,b)=>a[0]<b[2]&&a[2]>b[0]&&a[1]<b[3]&&a[3]>b[1],cap=Math.max(2,Math.floor(W/90));let n=0,used=new Set();
+  g.font='600 10.5px sans-serif';
+  for(const [p,j,up] of cand){if(n>=cap||used.has(j))continue;used.add(j);const x=X(pts[j][0]),y=Y(pts[j][1]),t=Math.round(pts[j][1])+'m',w=g.measureText(t).width+4;
+   let lx=Math.max(40,Math.min(W-w-2,x-w/2)),ly=up?y-6:y+14;if(ly<28)ly=y+14;if(ly>H-18)ly=y-6;const bx=[lx-1,ly-11,lx+w,ly+2];
+   if(boxes.some(b=>ov(b,bx)))continue;boxes.push(bx);n++;window.__profKeys.push(bx);
+   g.beginPath();g.arc(x,y,2.4,0,7);g.fillStyle=up?'#f2d39a':'#9fc3e6';g.fill();g.fillStyle='rgba(0,0,0,.45)';g.fillRect(bx[0],bx[1],bx[2]-bx[0],bx[3]-bx[1]);g.fillStyle='#fff';g.fillText(t,lx+1,ly);}}
+  profBg=g.getImageData(0,0,cv.width,cv.height);}
  else{g.setTransform(1,0,0,1,0,0);g.putImageData(profBg,0,0);g.setTransform(dpr,0,0,dpr,0,0);}
  g.beginPath();let di=0;for(let i=0;i<elev.length;i++){if(elevCum[i]*k>dist)break;g.lineTo(X(elevCum[i]*k),Y(elev[i][3]));di=i;}g.strokeStyle='#d07a5c';g.lineWidth=2.2;g.stroke();
- const cz=elev[di][3];g.beginPath();g.arc(X(dist),Y(cz),5,0,7);g.fillStyle='#e6c27a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();g.font='600 11.5px sans-serif';g.fillText('当前 '+Math.round(cz)+' m',Math.min(X(dist)+8,W-80),Math.max(Y(cz)-8,26));}
+ const cz=elev[di][3];g.beginPath();g.arc(X(dist),Y(cz),5,0,7);g.fillStyle='#e6c27a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();g.font='600 11.5px sans-serif';{const t='当前 '+Math.round(cz)+' m',w=g.measureText(t).width,lx=Math.min(X(dist)+8,W-w-4);let ly=Math.max(Y(cz)-8,26);const hit=y=>(window.__profKeys||[]).some(b=>lx<b[2]&&lx+w>b[0]&&y-12<b[3]&&y+2>b[1]);for(let tr=0;tr<6&&hit(ly);tr++)ly=ly-14<26?Math.min(H-20,ly+28):ly-14;g.fillText(t,lx,ly);}}
 function fmtH(s){s=Math.max(0,s||0);s=Math.round(s/60)*60;const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h+'时'+m+'分';}
 let svcAll=[];let lastUi=0,doneArr=[],doneIdx=0;const TXT={};function setT(id,v){if(TXT[id]!==v){TXT[id]=v;$(id).textContent=v;}}
 function updDone(p){if(p[2]<doneIdx||!doneArr.length){doneArr=[];doneIdx=0;}else doneArr.pop();while(doneIdx<p[2])doneArr.push(coords[doneIdx++]);doneArr.push([p[0],p[1]]);doneLayer.setLatLngs(doneArr);}
