@@ -48,7 +48,7 @@ svg.i{width:16px;height:16px;fill:none;stroke:currentColor;stroke-width:1.7;stro
 #stop img{width:320px;height:160px;object-fit:cover;border-radius:6px;background:#ddd}
 #stop .t{font-weight:bold;margin-top:4px}#stop .intro{font-size:13px;color:#333;text-align:left;margin:4px 0}
 #stop .cr{font-size:11px;color:#888}#cd{color:#1565c0;font-weight:bold}
-.carw{width:44px;height:44px;will-change:transform}
+.vehsel{width:100%;box-sizing:border-box;font:inherit;font-size:12.5px;padding:5px 8px;border:1px solid #e3ddd2;border-radius:8px;background:#fbf9f5;color:#3d3a35}.carw{width:60px;height:60px;will-change:transform}
 .pulse{width:16px;height:16px;border-radius:50%;border:2px solid #fff;box-sizing:border-box}
 .pulse.next::after{content:"";position:absolute;inset:-2px;border-radius:50%;border:3px solid #ffeb3b;animation:pl 1.4s ease-out infinite}
 @keyframes pl{from{transform:scale(1);opacity:1}to{transform:scale(3.2);opacity:0}}
@@ -220,7 +220,7 @@ html,body{overscroll-behavior:none}
 <div class="pa-act"><button class="bt pri" id="plan"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 000-6H9a3 3 0 010-6h6.8"/></svg>规划路线</button><button class="bt ol" id="ret"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>返程</button></div>
 <div class="pa-sec"><div class="pa-sh"><span>播放</span></div>
  <div class="pl"><div class="seg"><button id="play" title="开始"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="pause" title="暂停"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></svg></button><button id="reset" title="重置"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.2 8.2 0 00-6 2.7"/><path d="M5 3v4h4"/></svg></button></div><div class="chips num" id="chips"></div></div><select id="speed" style="display:none"><option value="10">10 km/秒</option><option value="25" selected>25 km/秒</option><option value="60">60 km/秒</option><option value="150">150 km/秒</option></select></div>
-<div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图</span></div></div>
+<div class="pa-sec"><div class="pa-sh"><span>车型</span></div><select id="vehsel" class="vehsel" onchange="setVeh(this.value)"></select></div><div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图</span></div></div>
 <div class="pa-sec"><div class="pa-sh"><span>镜头</span></div>
  <label class="sw"><span>镜头跟随</span><input type="checkbox" id="follow" checked></label>
  <div id="d3ctl" style="display:none"><div class="sl"><span>镜头远近</span><input id="dist" type="range" min="0" max="200" step="1" value="100" autocomplete="off"><span id="dv">100</span></div><div class="sl"><span>镜头俯仰</span><input id="pit" type="range" min="0" max="80" step="1" value="60"><span id="pv">60°</span></div><div class="sl"><span>地形夸张</span><input id="exag" type="range" min="0" max="3" step="0.1" value="1.5"><span id="exv">1.5×</span></div></div></div>
@@ -297,7 +297,25 @@ async function liveElev(){const es=[];const st=Math.max(1,Math.floor(coords.leng
 function cacheKey(f,t,v){const n=s=>s.replace(/市|区|县/g,'');f=n(f);t=n(t);v=v.map(n).join('>');
  if(f==='秦皇岛'&&t==='乌拉特后旗'&&!v)return ['default',false];if(t==='秦皇岛'&&f==='乌拉特后旗'&&!v)return ['default',true];
  if(f==='秦皇岛'&&t==='乌拉特后旗'&&v==='大同')return ['datong',false];if(t==='秦皇岛'&&f==='乌拉特后旗'&&v==='大同')return ['datong',true];return [null];}
-const CAR_SVG='<svg viewBox="0 0 44 44" width="44" height="44"><ellipse cx="22" cy="23" rx="11" ry="19" fill="rgba(0,0,0,.35)"/><rect x="12" y="4" width="20" height="36" rx="8" fill="#e53935" stroke="#7f0000" stroke-width="1.2"/><rect x="14.5" y="10" width="15" height="7" rx="2.5" fill="#263238"/><rect x="15" y="29" width="14" height="5" rx="2" fill="#263238"/><rect x="15" y="18" width="14" height="10" rx="2" fill="#c62828"/><rect x="13.5" y="4.5" width="4" height="2.5" rx="1" fill="#fff59d"/><rect x="26.5" y="4.5" width="4" height="2.5" rx="1" fill="#fff59d"/><rect x="13.5" y="37" width="4" height="2" fill="#ff1744"/><rect x="26.5" y="37" width="4" height="2" fill="#ff1744"/></svg>';
+// ---- 车型：6 种可选（无品牌标志），2D 俯视 SVG 与 3D 拼装共用同一份部件数据 ----
+// 部件 [前,后,半宽,底,顶,颜色,横向偏移]，单位：车长
+const LT=(c,o)=>[[0.505,0.48,0.045,0.1,0.13,'#fff59d',o],[0.505,0.48,0.045,0.1,0.13,'#fff59d',-o]],TL=(o,f=-0.48)=>[[f,f-0.025,0.045,0.1,0.13,'#ff1744',o],[f,f-0.025,0.045,0.1,0.13,'#ff1744',-o]];
+const VEHS=[
+ {n:'黑色轿车 · 奥迪A6',len:1,parts:[[0.36,0.22,0.2,0,0.08,'#111'],[-0.22,-0.36,0.2,0,0.08,'#111'],[0.5,-0.5,0.19,0.03,0.17,'#1d2026'],[0.22,-0.3,0.165,0.17,0.27,'#5a6b7a'],[0.1,-0.2,0.15,0.27,0.29,'#16181c'],...LT(0,0.13),...TL(0.13,-0.48)]},
+ {n:'白色商务 · 别克GL8',len:1.05,parts:[[0.38,0.25,0.2,0,0.08,'#111'],[-0.25,-0.38,0.2,0,0.08,'#111'],[0.5,-0.5,0.19,0.03,0.2,'#f3f3f0'],[0.34,-0.47,0.172,0.2,0.33,'#3d4b57'],[0.26,-0.44,0.16,0.33,0.36,'#e9e8e3'],[0.2,-0.38,0.012,0.36,0.375,'#9aa0a6',0.12],[0.2,-0.38,0.012,0.36,0.375,'#9aa0a6',-0.12],...LT(0,0.13),...TL(0.13)]},
+ {n:'银色SUV · 特斯拉Model Y',len:1,parts:[[0.36,0.22,0.205,0,0.09,'#111'],[-0.22,-0.36,0.205,0,0.09,'#111'],[0.5,-0.5,0.2,0.03,0.2,'#c5c9cf'],[0.27,-0.38,0.175,0.2,0.32,'#28313b'],[0.5,0.47,0.13,0.11,0.13,'#eef2f5'],...TL(0.1,-0.48)]},
+ {n:'中巴 · 丰田考斯特',len:1.45,parts:[[0.38,0.27,0.15,0,0.08,'#111'],[-0.26,-0.37,0.15,0,0.08,'#111'],[0.5,-0.5,0.145,0.03,0.3,'#f3efe6'],[0.49,-0.49,0.148,0.11,0.15,'#5f8f7a'],[0.46,-0.42,0.149,0.18,0.28,'#33414d'],[0.5,0.45,0.13,0.17,0.29,'#33414d'],[0.43,-0.48,0.125,0.3,0.33,'#e4dfd3'],[0.1,-0.05,0.07,0.33,0.36,'#cfc9bc'],...LT(0,0.1),...TL(0.1)]},
+ {n:'重型卡车 · 奔驰',len:1.6,parts:[[0.45,0.39,0.1,0,0.06,'#111'],[0.14,0.04,0.1,0,0.06,'#111'],[-0.3,-0.46,0.1,0,0.06,'#111'],[0.5,0.33,0.09,0.03,0.25,'#2f5d8a'],[0.5,0.46,0.086,0.14,0.22,'#1f2a33'],[0.44,0.35,0.085,0.25,0.29,'#2f5d8a'],[0.31,-0.5,0.096,0.06,0.28,'#dcd6c8'],[0.3,-0.49,0.08,0.28,0.285,'#cbc4b4'],...LT(0,0.06),...TL(0.07,-0.495)]},
+ {n:'摩托车 · 本田',len:0.62,parts:[[0.5,0.2,0.035,0,0.3,'#111'],[-0.2,-0.5,0.04,0,0.3,'#111'],[0.28,-0.3,0.085,0.18,0.3,'#c62828'],[0.24,0.2,0.21,0.32,0.36,'#555'],[0.02,-0.32,0.075,0.3,0.34,'#222'],[0.08,-0.22,0.14,0.34,0.62,'#3b3f46'],[0.14,-0.02,0.075,0.62,0.75,'#f5f5f5'],[0.53,0.5,0.035,0.24,0.29,'#fff59d'],[-0.5,-0.53,0.035,0.22,0.27,'#ff1744']]}];
+let VEH_I=(()=>{try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');if(r&&r.veh!=null&&Date.now()-r.t<6e5&&VEHS[r.veh])return r.veh;}catch(e){}return Math.floor(Math.random()*VEHS.length);})();
+const VEH=()=>VEHS[VEH_I];
+function vehSvg(v){const S=60,c=S/2,Lp=34*v.len,ps=v.parts.slice().sort((a,b)=>a[4]-b[4]);let o='<svg viewBox="0 0 '+S+' '+S+'" width="'+S+'" height="'+S+'"><ellipse cx="'+c+'" cy="'+(c+1)+'" rx="'+(Math.max(...v.parts.map(p=>p[2]))*Lp+2).toFixed(1)+'" ry="'+(Lp/2+2).toFixed(1)+'" fill="rgba(0,0,0,.35)"/>';
+ for(const [f1,f2,w,b,t,col,off=0] of ps){const x=c+(off-w)*Lp,y=c-f1*Lp,W=2*w*Lp,H=(f1-f2)*Lp,r=Math.min(W,H)*0.28;o+='<rect x="'+x.toFixed(2)+'" y="'+y.toFixed(2)+'" width="'+W.toFixed(2)+'" height="'+H.toFixed(2)+'" rx="'+r.toFixed(2)+'" fill="'+col+'"'+(t>=0.15&&W>4?' stroke="rgba(255,255,255,.55)" stroke-width=".6"':'')+'/>';}
+ return o+'</svg>';}
+let CAR_SVG=vehSvg(VEH());
+function setVeh(i){VEH_I=+i;CAR_SVG=vehSvg(VEH());const sel=document.getElementById('vehsel');if(sel)sel.value=VEH_I;
+ if(typeof car!=='undefined'&&car&&car.setIcon){car.setIcon(L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}));carEl=car.getElement().firstChild;carEl.style.transform='rotate('+heading+'deg)';}
+ else if(typeof carLL!=='undefined'&&carLL)updateCar(carLL[0],carLL[1]);}
 function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push(cum[i-1]+hav(c[i-1],c[i]));total=cum[cum.length-1];duration=dur;
  segs=sg&&sg.length?sg:[{i0:0,i1:c.length-1,name:'',ref:''}];buildRuns();
  routeG.clearLayers();[doneLayer,miniRoute].forEach(l=>l&&l.remove());
@@ -307,7 +325,7 @@ function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push
  doneLayer=L.polyline([],{color:'#d50000',weight:3.5}).addTo(map);
  miniRoute=L.polyline(c,{color:'#ff1744',weight:2}).addTo(mini);mini.fitBounds(miniRoute.getBounds(),{padding:[8,8]});
  map.fitBounds(L.latLngBounds(c),MOB()?{paddingTopLeft:[24,$('stat').getBoundingClientRect().bottom+20],paddingBottomRight:[24,innerHeight-$('ctl').getBoundingClientRect().top+20]}:{paddingTopLeft:[$('ctl').classList.contains('hide')?40:$('ctl').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});
- if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[44,44],iconAnchor:[22,22]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
+ if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
  if(!miniCar)miniCar=L.circleMarker(c[0],{radius:5,color:'#fff',fillColor:'#ffeb3b',fillOpacity:1}).addTo(mini);
  $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=[];resetAnim();ADDR.routeSet(c[0],c[c.length-1]);setPlayEn(true);}
 function project(lat,lon){let best=1e9,bi=0;for(let i=0;i<coords.length;i+=2){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {off:best,along:cum[bi]};}
@@ -358,7 +376,7 @@ let profSz=null;function drawProf(full){const cv=$('prof');if(!cv.clientWidth||!
  if(elevCum.src!==elev){smoothElev();elevCum=[0];for(let i=1;i<elev.length;i++)elevCum.push(elevCum[i-1]+hav(elev[i-1],elev[i]));elevCum.src=elev;profBg=null;}
  const k=total/elevCum[elevCum.length-1];const zs=elev.map(e=>e[3]),mn=Math.min(...zs),mx=Math.max(...zs);const X=d=>40+(W-50)*d/total,Y=z=>H-18-(H-40)*(z-mn)/((mx-mn)||1);
  if(!profBg||full){g.clearRect(0,0,W,H);g.beginPath();g.moveTo(X(0),H-18);elev.forEach((e,i)=>g.lineTo(X(elevCum[i]*k),Y(e[3])));g.lineTo(X(total),H-18);{const gr=g.createLinearGradient(0,14,0,H-18);gr.addColorStop(0,'rgba(125,155,129,.8)');gr.addColorStop(1,'rgba(125,155,129,.08)');g.fillStyle=gr;g.fill();g.strokeStyle='rgba(175,200,170,.9)';g.lineWidth=1.2;g.stroke();}
-  g.fillStyle='rgba(255,255,255,.86)';g.font='600 11.5px "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Noto Sans CJK SC",sans-serif';g.fillText('海拔剖面  '+Math.round(mn)+'–'+Math.round(mx)+' m',45,14);g.fillText(Math.round(mx)+'m',2,Y(mx)+4);g.fillText(Math.round(mn)+'m',2,Y(mn));g.fillText('0',X(0),H-4);g.fillText(total.toFixed(0)+' km',X(total)-45,H-4);
+  g.fillStyle='rgba(255,255,255,.86)';g.font='600 11.5px "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Noto Sans CJK SC",sans-serif';g.fillText('海拔剖面  '+Math.round(mn)+'–'+Math.round(mx)+' m',45,14);g.fillText(Math.round(mx)+'m',2,Y(mx)+4);g.fillText(Math.round(mn)+'m',2,Y(mn));g.fillText('0',X(0),H-4);g.fillText(total.toFixed(0)+' km',X(total)-45,H-4);{const st=total>=1000?500:200;g.save();g.font='500 10.5px sans-serif';const tw=g.measureText(total.toFixed(0)+' km').width;for(let d=st;d<total;d+=st){const x=X(d);g.fillStyle='rgba(255,255,255,.55)';g.fillRect(x-0.5,H-18,1,4);const t=d+'',w=g.measureText(t).width;if(x-w/2<X(0)+14||x+w/2>X(total)-tw-8)continue;g.fillStyle='rgba(255,255,255,.75)';g.fillText(t,x-w/2,H-4);}g.restore();}
   stops.forEach(s=>{g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});{window.__profKeys=[];const N=Math.max(20,Math.min(elev.length,Math.floor((W-50)/3))),pts=[];for(let j=0;j<N;j++){const i=Math.round(j*(elev.length-1)/(N-1));pts.push([elevCum[i]*k,elev[i][3]]);}
   const rng=(mx-mn)||1,thr=Math.max(120,rng*0.18),cand=[];
   const prom=(j,up)=>{let a=Infinity,b=Infinity;const z=pts[j][1];for(let q=j-1;q>=0;q--){const d=up?z-pts[q][1]:pts[q][1]-z;if(d<0)break;a=Math.min(a,Infinity);}let l=z,r=z;for(let q=j-1;q>=0;q--){if(up?pts[q][1]>z:pts[q][1]<z)break;l=up?Math.min(l,pts[q][1]):Math.max(l,pts[q][1]);}for(let q=j+1;q<N;q++){if(up?pts[q][1]>z:pts[q][1]<z)break;r=up?Math.min(r,pts[q][1]):Math.max(r,pts[q][1]);}return up?z-Math.max(l,r):Math.min(l,r)-z;};
@@ -595,7 +613,7 @@ ADDR.init();renderVia();renderChips();
 const ZOFF=window.ZOFF||0;// MapLibre 缩放级 = Leaflet 缩放级 - 1
 function saveState(){try{const c=map.getCenter(),st={t:Date.now(),coords,duration,segs,svc:lastSvc,fb:lastFb,elev,from:$('from').value,to:$('to').value,via:$('via').value,pick:ADDR.PICK,
  dist,v,heading,playing,arrived,stop:!!stopTimer,stopIdx:nextStop-1,cd:window.__cd,speed:$('speed').value,follow:$('follow').checked,hidden:$('ctl').classList.contains('hide'),muted,
- view:{lat:c.lat,lng:c.lng,z:map.getZoom()+ZOFF},sl:['dist','pit','exag'].filter(id=>$(id)).map(id=>[id,$(id).value])};sessionStorage.setItem('dm_state',JSON.stringify(st));}catch(e){console.warn('saveState',e);}}
+ veh:VEH_I,view:{lat:c.lat,lng:c.lng,z:map.getZoom()+ZOFF},sl:['dist','pit','exag'].filter(id=>$(id)).map(id=>[id,$(id).value])};sessionStorage.setItem('dm_state',JSON.stringify(st));}catch(e){console.warn('saveState',e);}}
 $('sw').addEventListener('click',saveState);
 let RESTORE=null;try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');sessionStorage.removeItem('dm_state');if(r&&Date.now()-r.t<10*60e3&&r.coords&&r.coords.length)RESTORE=r;}catch(e){}
 function restoreRoute(st){$('from').value=st.from;$('to').value=st.to;$('via').value=st.via;Object.assign(ADDR.PICK,st.pick||{});
@@ -621,7 +639,7 @@ let edgeT=0;function edgeWatch(now){if(!playing||$('follow').checked||now-edgeT<
  const A=clearArea(),p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),mx=(A.r-A.l)*0.12,my=(A.b-A.t)*0.12;
  if(c.x<A.l+mx||c.x>A.r-mx||c.y<A.t+my||c.y>A.b-my||!isFinite(c.x)){const dx=c.x-(A.l+A.r)/2,dy=c.y-(A.t+A.b)/2;panUntil=now+1100;panCar(dx,dy);window.__recenters=(window.__recenters||0)+1;}}
 function panCar(dx,dy){map.panBy([dx,dy],{animate:true,duration:0.9,easeLinearity:0.35});}
-bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
+$('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').join('');$('vehsel').value=VEH_I;bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
 </script>
 <script>
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
