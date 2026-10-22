@@ -155,6 +155,27 @@ body.playing #ctl{background:var(--paper2)!important}body.playing #bar{backgroun
 #toast{position:absolute;z-index:3000;left:50%;top:calc(env(safe-area-inset-top) + 14px);transform:translate(-50%,-20px);opacity:0;transition:.35s;pointer-events:none;padding:8px 16px;border-radius:999px;background:var(--paper,#fbf9f5);color:var(--ink,#2b2a27);box-shadow:0 4px 18px rgba(40,30,20,.18);font:13px var(--font);max-width:90vw;text-align:center}#toast.on{opacity:1;transform:translate(-50%,0)}
 .grab,.mplay{display:none}
 html,body{overscroll-behavior:none}
+
+/* 紧凑面板：宽度为原 3/4（328→246），工具栏同宽对齐 */
+:root{--pw:246px}
+#bar{gap:0!important;padding:2px!important}#bar button,#bar a{font-size:12px!important;gap:3px!important;padding:0 3px!important;height:30px}#bar .i{width:14px;height:14px;flex:none}
+#ctl.pa{padding:10px 10px 8px!important;font-size:13px!important;top:50px!important}
+.pa-hd{display:block!important;margin-bottom:4px!important}.pa-hd h1{font-size:15px!important}.pa-hd span{display:block;font-size:12px!important;margin-top:2px;white-space:normal!important}
+.rt-row{grid-template-columns:12px minmax(0,1fr) auto!important;gap:6px!important;min-height:40px!important}
+.rt-row small{font-size:11.5px!important}.rt-row input{font-size:13px!important}
+#ctl .ib{width:24px!important;min-width:24px!important;height:28px!important;padding:0!important}#ctl .ib .i{width:15px;height:15px}.rt-a{gap:0!important}
+.rt-x{gap:4px 10px!important;font-size:12px!important}.rt-x a{font-size:12px!important}
+#ctl .fl{font-size:12px}
+.pa-act{grid-template-columns:minmax(0,1fr) auto!important;gap:6px!important;margin:8px 0 2px!important}.pa-act .bt{font-size:13px!important;height:36px!important;padding:0 8px!important;gap:4px!important}
+.pa-sec{margin-top:8px!important}.pa-sh{font-size:12px!important;margin-bottom:4px!important}
+.pl{display:block!important}.pl .seg{display:flex!important;width:100%;margin-bottom:4px}.pl .seg button{flex:1;height:30px!important}
+.chips{display:grid!important;grid-template-columns:repeat(auto-fit,minmax(0,1fr));gap:2px!important}.chips span{font-size:12px!important;padding:5px 0!important}
+#bmsel{grid-template-columns:1fr 1fr 1.5fr!important}
+#ctl .sw{font-size:13px!important}
+#ctl .sl{grid-template-columns:auto minmax(0,1fr) 30px!important;gap:6px!important;font-size:12.5px!important;height:26px!important}#ctl .sl span:last-child{font-size:12px!important}
+.pa-ft{gap:6px!important;margin-top:8px!important}.pa-ft .bt{font-size:12.5px!important;height:34px!important;padding:0 6px!important;gap:4px!important}.pa-ft .bt em{display:none}
+#ctl .hint{font-size:12px!important}
+#ctl.pa{container-type:inline-size}@container (max-width:236px){.pa-ft .bt svg{display:none}.pa-ft .bt{padding:0 4px!important}}
 @media (max-width:640px),(max-height:500px){
  html,body{position:fixed;inset:0;overflow:hidden;touch-action:manipulation;-webkit-user-select:none;user-select:none}
  input,textarea{-webkit-user-select:text;user-select:text;font-size:16px!important}
@@ -196,7 +217,7 @@ html,body{overscroll-behavior:none}
 <div class="pa-act"><button class="bt pri" id="plan"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 000-6H9a3 3 0 010-6h6.8"/></svg>规划路线</button><button class="bt ol" id="ret"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>返程</button></div>
 <div class="pa-sec"><div class="pa-sh"><span>播放</span></div>
  <div class="pl"><div class="seg"><button id="play" title="开始"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="pause" title="暂停"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></svg></button><button id="reset" title="重置"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.2 8.2 0 00-6 2.7"/><path d="M5 3v4h4"/></svg></button></div><div class="chips num" id="chips"></div></div><select id="speed" style="display:none"><option value="10">10 km/秒</option><option value="25" selected>25 km/秒</option><option value="60">60 km/秒</option><option value="150">150 km/秒</option></select></div>
-<div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图注记</span></div></div>
+<div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图</span></div></div>
 <div class="pa-sec"><div class="pa-sh"><span>镜头</span></div>
  <label class="sw"><span>镜头跟随</span><input type="checkbox" id="follow" checked></label>
  <div id="d3ctl"><div class="sl"><span>镜头远近</span><input id="dist" type="range" min="0" max="100" step="1" value="45"><span id="dv">45</span></div><div class="sl"><span>镜头俯仰</span><input id="pit" type="range" min="0" max="80" step="1" value="60"><span id="pv">60°</span></div><div class="sl"><span>地形夸张</span><input id="exag" type="range" min="0" max="3" step="0.1" value="1.5"><span id="exv">1.5×</span></div></div></div>
@@ -220,6 +241,7 @@ html,body{overscroll-behavior:none}
 <div id="stop"><h3 id="stopName"></h3><div id="stopTags"></div><div id="stopBody"></div><div>停留中 <span id="cd">5</span> 秒…</div></div>
 <svg id="lead"><line id="leadL" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="5 4" opacity="0"/><circle id="leadC" r="5" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></svg><div id="sign"></div><div id="arrive"></div>
 <div id="mini"></div><canvas id="prof"></canvas>
+<script>/* 预览用：?pw=220 覆盖面板宽度变量 */if(/^\d{3}$/.test(new URLSearchParams(location.search).get('pw')||''))document.documentElement.style.setProperty('--pw',new URLSearchParams(location.search).get('pw')+'px');</script>
 <script>
 const $=id=>document.getElementById(id), Q=new URLSearchParams(location.search);
 const GURL='https://mt{s}.google.com/vt/lyrs=y&hl=zh-CN&x={x}&y={y}&z={z}';
