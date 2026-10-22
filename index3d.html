@@ -388,8 +388,9 @@ async function extras(gen){const live=()=>gen===planGen;
  withTO(liveElev(),15000).then(e=>{if(live()){elev=e;drawProf(true);}}).catch(()=>{});
  if(total<5){buildStops([]);return;}
  $('where').textContent='正在查询服务区…';
- try{const s=await withTO(liveServices(),8000);if(!live())return;if(!s.length)throw Error('无服务区');buildStops(s);}
- catch(e){if(!live())return;buildStops([]);$('where').textContent='服务区数据暂不可用，本次无停靠';msg('提示：服务区查询失败或超时，已直接播放（无停靠点）');
+ const P=liveServices();let slow=setTimeout(()=>{if(live()){$('where').textContent='服务区查询较慢，可先播放，结果到达后自动加入';}},8000);
+ try{const s=await withTO(P,90000);clearTimeout(slow);if(!live())return;if(!s.length)throw Error('无服务区');buildStops(s);}
+ catch(e){clearTimeout(slow);if(!live())return;buildStops([]);$('where').textContent='服务区数据暂不可用，本次无停靠';msg('提示：服务区查询失败或超时，已直接播放（无停靠点）');
   try{const fb=await withTO(fallbackStops(),20000);if(live()&&dist<total*0.05){buildStops(fb,true);msg('注意：停靠点不是服务区（服务区数据暂不可用）');}}catch(e){}}}
 function pointAt(d){d=Math.max(0,Math.min(total,d));let lo=0,hi=cum.length-1;while(lo<hi){const m=(lo+hi)>>1;if(cum[m]<d)lo=m+1;else hi=m;}const i=Math.max(1,lo);const f=Math.min(1,Math.max(0,(d-cum[i-1])/((cum[i]-cum[i-1])||1)));
  return [coords[i-1][0]+(coords[i][0]-coords[i-1][0])*f,coords[i-1][1]+(coords[i][1]-coords[i-1][1])*f,i];}
