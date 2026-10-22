@@ -210,9 +210,9 @@ html,body{overscroll-behavior:none}
 <div id="ctl" class="pa">
 <div class="grab" id="grab"><i></i></div><div class="pa-hd"><button class="mplay" id="mplay" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><h1>自驾路线</h1><span id="psum" class="num"></span></div>
 <div class="rt">
- <div class="rt-row s"><span class="rt-dot"></span><label class="rt-f"><small>起点</small><input id="from" value="秦皇岛" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="myloc" title="我的位置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button class="ib" data-pick="from" title="在地图上选起点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
+ <div class="rt-row s"><span class="rt-dot"></span><label class="rt-f"><small>起点</small><input id="from" value="" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="myloc" title="我的位置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button class="ib" data-pick="from" title="在地图上选起点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
  <div id="vias"></div>
- <div class="rt-row e"><span class="rt-dot"></span><label class="rt-f"><small>终点</small><input id="to" value="乌拉特后旗" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="swap" title="起终点互换"><svg class="i" viewBox="0 0 24 24"><path d="M8 4v16M8 4L4.5 7.5M8 4l3.5 3.5M16 20V4M16 20l-3.5-3.5M16 20l3.5-3.5"/></svg></button><button class="ib" data-pick="to" title="在地图上选终点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
+ <div class="rt-row e"><span class="rt-dot"></span><label class="rt-f"><small>终点</small><input id="to" value="" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="swap" title="起终点互换"><svg class="i" viewBox="0 0 24 24"><path d="M8 4v16M8 4L4.5 7.5M8 4l3.5 3.5M16 20V4M16 20l-3.5-3.5M16 20l3.5-3.5"/></svg></button><button class="ib" data-pick="to" title="在地图上选终点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
  <textarea id="via" style="display:none"></textarea>
 </div>
 <div class="rt-x"><a id="addvia"><svg class="i" viewBox="0 0 24 24"><path d="M12 5v14M5 12h14"/></svg>添加途经点</a><a data-pick="via" title="在地图上点选一个途经点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>在地图上选点</a><a id="geoset" title="地址搜索设置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3M12 19v3M4.9 4.9l2.1 2.1M17 17l2.1 2.1M2 12h3M19 12h3M4.9 19.1L7 17M17 7l2.1-2.1"/></svg></a></div>
@@ -248,7 +248,7 @@ html,body{overscroll-behavior:none}
 <script>
 const $=id=>document.getElementById(id), Q=new URLSearchParams(location.search);
 const GURL='https://mt{s}.google.com/vt/lyrs=y&hl=zh-CN&x={x}&y={y}&z={z}';
-const map=L.map('map',{attributionControl:false,zoomControl:false,zoomSnap:0.25}).setView([40.6,113],6);
+const map=L.map('map',{attributionControl:false,zoomControl:false,zoomSnap:0.25}).setView([35.5,104],4.25);
 L.control.zoom({position:'topright'}).addTo(map);
 const LblLayer=L.GridLayer.extend({createTile(c,done){const cv=document.createElement('canvas');GCJLBL.tile(c.x,c.y,c.z,cv).then(()=>done(null,cv));return cv;}});map.createPane('lbl').style.zIndex=350;map.getPane('lbl').style.pointerEvents='none';
 const baseL=L.layerGroup().addTo(map);
@@ -309,10 +309,10 @@ function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push
  map.fitBounds(L.latLngBounds(c),MOB()?{paddingTopLeft:[24,$('stat').getBoundingClientRect().bottom+20],paddingBottomRight:[24,innerHeight-$('ctl').getBoundingClientRect().top+20]}:{paddingTopLeft:[$('ctl').classList.contains('hide')?40:$('ctl').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});
  if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[44,44],iconAnchor:[22,22]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
  if(!miniCar)miniCar=L.circleMarker(c[0],{radius:5,color:'#fff',fillColor:'#ffeb3b',fillOpacity:1}).addTo(mini);
- $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=[];resetAnim();ADDR.routeSet(c[0],c[c.length-1]);}
+ $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=[];resetAnim();ADDR.routeSet(c[0],c[c.length-1]);setPlayEn(true);}
 function project(lat,lon){let best=1e9,bi=0;for(let i=0;i<coords.length;i+=2){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {off:best,along:cum[bi]};}
-let lastSvc=[],lastFb=false;function buildStops(list,isFallback){lastSvc=list;lastFb=!!isFallback;svcLayer.clearLayers();let arr=[];
- for(const s of list){const p=project(s.lat,s.lon);if(p.off>2||p.along<10||total-p.along<10)continue;arr.push({...s,along:p.along});}
+let lastSvc=[],lastFb=false;function buildStops(list,isFallback){lastSvc=list;lastFb=!!isFallback;svcLayer.clearLayers();let arr=[];if(total<5)list=[];const eb=Math.min(10,total*0.1);
+ for(const s of list){const p=project(s.lat,s.lon);if(p.off>1.5||p.along<eb||p.along>total-eb)continue;arr.push({...s,along:p.along});}
  arr.sort((a,b)=>a.along-b.along);
  const m=[];for(const s of arr){const l=m[m.length-1];if(l&&s.along-l.along<3){l.fuel=l.fuel||s.fuel;if(!l.name&&s.name)l.name=s.name;}else m.push({...s});}
  m.forEach(s=>{s.label=s.name?s.name.replace(/\s*[\(（].*?方向[\)）]/,''):'服务区';});
@@ -327,12 +327,19 @@ async function fallbackStops(){const n=Math.max(3,Math.min(10,Math.round(total/1
   try{const d=await fetchT('https://nominatim.openstreetmap.org/reverse?format=json&zoom=10&accept-language=zh&lat='+p[0]+'&lon='+p[1]);const a=d.address||{};name=(a.county||a.city||a.town||a.state||name);}catch(e){}
   out.push({name:'途经点（非服务区）· '+name+'附近',lat:p[0],lon:p[1],fuel:null});await new Promise(r=>setTimeout(r,1100));}return out;}
 function revSegs(sg,N){return sg.map(s=>({...s,i0:N-1-s.i1,i1:N-1-s.i0})).reverse();}
-async function plan(){const f=$('from').value.trim(),t=$('to').value.trim(),v=$('via').value.split(/\n|,|，/).map(s=>s.trim()).filter(Boolean);
- pause();msg('正在定位与规划路线…');const [key,rev]=cacheKey(f,t,v);const C=key&&window.CACHE&&CACHE[key];
+function inSig(){return JSON.stringify([$('from').value.trim(),$('to').value.trim(),$('via').value.split(/\n|,|，/).map(s=>s.trim()).filter(Boolean)]);}
+let planSig=null,planning=null;
+function clearRouteStops(){svcStops=[];svcAll=[];lastSvc=[];svcLayer.clearLayers();stops=stops.filter(s=>s.node);nextStop=0;}
+function setPlayEn(b){['play','mplay'].forEach(i=>{const e=$(i);if(e){e.disabled=!b;e.style.opacity=b?'':'.4';}});}
+function emptyState(){setPlayEn(false);msg('输入起点和终点开始规划');try{drawProf(true);}catch(e){}}
+function plan(){return planning||(planning=plan0().finally(()=>{planning=null;}));}
+async function plan0(){const f=$('from').value.trim(),t=$('to').value.trim(),v=$('via').value.split(/\n|,|，/).map(s=>s.trim()).filter(Boolean);
+ if(!f||!t){msg('输入起点和终点开始规划');return;}pause();planSig=inSig();clearRouteStops();resetAnim();msg('正在定位与规划路线…');const [key,rev]=cacheKey(f,t,v);const C=key&&window.CACHE&&CACHE[key];
  let ok=false;try{if(C&&!Q.get('live'))throw 0;const pts=[];for(const q of [f,...v,t])pts.push(await geocode(q));const r=await osrm(pts);setRoute(r.coords,r.duration,r.segs);ok=true;}
  catch(e){if(C){const c=rev?[...C.coords].reverse():C.coords;setRoute(c,C.duration,rev?revSegs(C.segs,c.length):C.segs);}else{msg('路线规划失败：'+e.message);return;}}
- if(C){buildStops(C.services);elev=rev?[...C.elev].reverse():C.elev;drawProf();msg('');return;}
+ if(C&&!ok){buildStops(C.services);elev=rev?[...C.elev].reverse():C.elev;drawProf();msg('');return;}
  try{elev=await liveElev();drawProf();}catch(e){}
+ if(total<5){buildStops([]);msg('');return;}
  try{const s=await liveServices();if(!s.length)throw Error('无服务区');buildStops(s);msg('');}
  catch(e){msg('服务区查询失败，改为均匀途经点…');buildStops(await fallbackStops(),true);msg('注意：停靠点不是服务区（服务区数据暂不可用）');}}
 function pointAt(d){d=Math.max(0,Math.min(total,d));let lo=0,hi=cum.length-1;while(lo<hi){const m=(lo+hi)>>1;if(cum[m]<d)lo=m+1;else hi=m;}const i=Math.max(1,lo);const f=Math.min(1,Math.max(0,(d-cum[i-1])/((cum[i]-cum[i-1])||1)));
@@ -350,12 +357,12 @@ let profSz=null;function drawProf(full){const cv=$('prof');if(!cv.clientWidth||!
  else{g.setTransform(1,0,0,1,0,0);g.putImageData(profBg,0,0);g.setTransform(dpr,0,0,dpr,0,0);}
  g.beginPath();let di=0;for(let i=0;i<elev.length;i++){if(elevCum[i]*k>dist)break;g.lineTo(X(elevCum[i]*k),Y(elev[i][3]));di=i;}g.strokeStyle='#d07a5c';g.lineWidth=2.2;g.stroke();
  const cz=elev[di][3];g.beginPath();g.arc(X(dist),Y(cz),5,0,7);g.fillStyle='#e6c27a';g.fill();g.strokeStyle='#fff';g.lineWidth=1.5;g.stroke();g.font='600 11.5px sans-serif';g.fillText('当前 '+Math.round(cz)+' m',Math.min(X(dist)+8,W-80),Math.max(Y(cz)-8,26));}
-function fmtH(s){s=Math.round(s/60)*60;const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h+'时'+m+'分';}
+function fmtH(s){s=Math.max(0,s||0);s=Math.round(s/60)*60;const h=Math.floor(s/3600),m=Math.round(s%3600/60);return h+'时'+m+'分';}
 let svcAll=[];let lastUi=0,doneArr=[],doneIdx=0;const TXT={};function setT(id,v){if(TXT[id]!==v){TXT[id]=v;$(id).textContent=v;}}
 function updDone(p){if(p[2]<doneIdx||!doneArr.length){doneArr=[];doneIdx=0;}else doneArr.pop();while(doneIdx<p[2])doneArr.push(coords[doneIdx++]);doneArr.push([p[0],p[1]]);doneLayer.setLatLngs(doneArr);}
 function updateUI(now){const p=pointAt(dist);car.setLatLng([p[0],p[1]]);
  const force=now===1e12;if(!force&&now-lastUi<100&&playing)return p;lastUi=force?performance.now():now;miniCar.setLatLng([p[0],p[1]]);updDone(p);
- setT('done',dist.toFixed(1));setT('left',Math.max(0,total-dist).toFixed(1));setT('eta',fmtH(duration*(1-dist/total)));
+ setT('done',dist.toFixed(1));setT('left',Math.max(0,total-dist).toFixed(1));setT('eta',fmtH(Math.max(0,duration*(1-Math.min(1,total?dist/total:1)))));
  const pr=total?dist/total:0;if(Math.abs(pr-(updateUI.pr||-1))>0.0005){updateUI.pr=pr;$('pbar').style.transform='scaleX('+pr.toFixed(4)+')';}
  const ns=svcAll.find(s=>s.along>dist+0.05),nf=svcAll.find(s=>s.fuel&&s.along>dist+0.05);setT('nsvc',ns?(ns.along-dist).toFixed(0)+' km':'—');setT('nfuel',nf?(nf.along-dist).toFixed(0)+' km':'—');
  drawProf();return p;}
@@ -391,7 +398,7 @@ let fpsN=0,fpsT=0;window.__fps=[];
 function frame(t){const dt=Math.min(.25,Math.max(0,(t-lastT)/1000));lastT=t;fpsN++;if(t-fpsT>1000){window.__fps.push(fpsN*1000/(t-fpsT));fpsN=0;fpsT=t;}
  const vmax=+$('speed').value,acc=vmax/1.5,NS=Math.max(1,Math.ceil(dt/0.017));
  for(let si=0;si<NS;si++){const dt0=dt;{const dt=dt0/NS;
- if(playing&&!stopTimer&&!arrived){const target=nextStop<stops.length?stops[nextStop].along:total;const rem=target-dist;
+ if(playing&&!stopTimer&&!arrived){const target=nextStop<stops.length?Math.min(total,stops[nextStop].along):total;const rem=target-dist;
   const allow=Math.sqrt(2*acc*Math.max(0,rem));v=Math.min(v+acc*dt,vmax,Math.max(allow,vmax*0.04));let nd=dist+v*dt;
   if(nd>=target){dist=target;v=0;if(nextStop<stops.length){updateUI(1e12);showStop(stops[nextStop]);nextStop++;markNext();}else{arrived=true;playing=false;document.body.classList.remove('playing');updateUI(1e12);window.__arrived=true;engine(0,true);celebrate();$('where').textContent='🏁 已到达终点：'+$('to').value;if(onArrive)onArrive();}}
   else dist=nd;
@@ -405,7 +412,7 @@ function frame(t){const dt=Math.min(.25,Math.max(0,(t-lastT)/1000));lastT=t;fpsN
  if(Math.random()<0.25)window.__log.push([performance.now(),playing?v/vmax:0,stopTimer?1:0]);
  requestAnimationFrame(frame);}
 requestAnimationFrame(t=>{lastT=t;fpsT=t;frame(t);});
-function play(keep){initAudio();if(AC&&AC.state==='suspended')AC.resume();if(!coords.length||playing)return;if(!keep&&(arrived||dist>=total))resetAnim();playing=true;document.body.classList.add('playing');
+function play(keep){initAudio();if(AC&&AC.state==='suspended')AC.resume();if(planning)return;if(planSig!==null&&inSig()!==planSig){plan().then(()=>{if(coords.length&&inSig()===planSig)play();});return;}if(!coords.length||playing)return;if(!keep&&(arrived||dist>=total))resetAnim();playing=true;document.body.classList.add('playing');
  if($('follow').checked)map.setView(car.getLatLng(),Math.max(map.getZoom(),9),{animate:false});}
 // ---- 图片素材 ----
 const BAD=/车站|站$|铁路|线$|公路|高速|国道|大桥|机场|学校|大学|中学|医院|公司|大厦|广场|小区|街道|镇$|乡$|村$|列表|行政区/;
@@ -596,7 +603,7 @@ let edgeT=0;function edgeWatch(now){if(!playing||$('follow').checked||now-edgeT<
  const A=clearArea(),p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),mx=(A.r-A.l)*0.12,my=(A.b-A.t)*0.12;
  if(c.x<A.l+mx||c.x>A.r-mx||c.y<A.t+my||c.y>A.b-my||!isFinite(c.x)){const dx=c.x-(A.l+A.r)/2,dy=c.y-(A.t+A.b)/2;panUntil=now+1100;panCar(dx,dy);window.__recenters=(window.__recenters||0)+1;}}
 function panCar(dx,dy){map.panBy([dx,dy],{animate:true,duration:0.9,easeLinearity:0.35});}
-bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}return plan();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
+bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
 </script>
 <script>
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
