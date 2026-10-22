@@ -711,7 +711,7 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
     let h=sp.offsetHeight;if(h>bot-lim){sc('noimg',true);h=sp.offsetHeight;}if(h>bot-lim){sc('mini',true);h=sp.offsetHeight;}S.setProperty('--stopT',lim+'px');}}
   const mt=$('mtoast');if(mt.classList.contains('on')){y-=mt.offsetHeight;S.setProperty('--mtT',y+'px');y-=8;}
   const tt=$('toast');if(tt&&getComputedStyle(tt).opacity>0.05){y-=tt.offsetHeight;S.setProperty('--toastT',y+'px');y-=8;}else if(tt)S.setProperty('--toastT',(y-(tt.offsetHeight||36))+'px');
-  window.__mobTop=y;window.__mobTopT=topBottom;window.__mobCY=(topBottom+y)/2;}
+  const topCam=Math.max(top0,sg.classList.contains('on')?signT+R(sg).height*0.8:0);window.__mobTop=y;window.__mobTopT=topCam;window.__mobCY=(topCam+y)/2;}
  window.mobLayout=layout;
  // 视口/键盘（iOS visualViewport）
  const vv=window.visualViewport;function vvU(){if(!vv)return;const S=document.documentElement.style;const kb=Math.max(0,innerHeight-vv.height-vv.offsetTop);S.setProperty('--kb',kb+'px');S.setProperty('--vvh',vv.height+'px');}
@@ -728,7 +728,7 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  new MutationObserver(()=>{if(!mq())return;const t=$('msg').textContent.trim();const mt=$('mtoast');if(!t||B.classList.contains('sheet')){mt.classList.remove('on');layout();return;}mt.textContent=t;mt.classList.add('on');layout();clearTimeout(mtT);mtT=setTimeout(()=>{mt.classList.remove('on');layout();},4000);}).observe($('msg'),{childList:true,characterData:true,subtree:true});
  // 停靠卡片：3 秒后自动收起成小条
  new MutationObserver(()=>{const sp=$('stop');if(sp.classList.contains('on')){if(!stopT0){stopT0=Date.now();if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');setTimeout(()=>{if(sp.classList.contains('on')&&mq()){sp.classList.add('mini');layout();window.__mobAvoid&&window.__mobAvoid();}},3000);}}else{stopT0=0;if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');}layout();if(sp.classList.contains('on'))mobAvoid();}).observe($('stop'),{attributes:true,attributeFilter:['class']});
- setInterval(()=>{if(mq()){$('bplay').innerHTML=$('mplay').innerHTML;layout();}},300);
+ let lastAv=0;setInterval(()=>{if(mq()){$('bplay').innerHTML=$('mplay').innerHTML;layout();if(!window.maplibregl&&$('stop').classList.contains('on')&&Date.now()-lastAv>700){try{const p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),r=$('stop').getBoundingClientRect();if(c.y>r.top-30&&c.y<r.bottom+10){lastAv=Date.now();mobAvoid();}}catch(_){}}}},300);
  addEventListener('resize',()=>{layout();setTimeout(layout,350);});layout();setTimeout(layout,500);
 })();
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
