@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231441"><script src="lib/leaflet.js?v=202610231441"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231441"><script src="lib/maplibre-gl.js?v=202610231441"></script><script src="lib/exifr.umd.js?v=202610231441"></script><script src="lib/gcj.js?v=202610231441"></script><script src="lib/gcjlabels.js?v=202610231441"></script><script src="lib/admin.js?v=202610231441"></script><script src="lib/qsmart.js?v=202610231441"></script><script src="lib/addr.js?v=202610231441"></script><script src="lib/basemap.js?v=202610231441"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231517"><script src="lib/leaflet.js?v=202610231517"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231517"><script src="lib/maplibre-gl.js?v=202610231517"></script><script src="lib/exifr.umd.js?v=202610231517"></script><script src="lib/gcj.js?v=202610231517"></script><script src="lib/gcjlabels.js?v=202610231517"></script><script src="lib/admin.js?v=202610231517"></script><script src="lib/qsmart.js?v=202610231517"></script><script src="lib/addr.js?v=202610231517"></script><script src="lib/basemap.js?v=202610231517"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -315,6 +315,8 @@ body.mob #ned .th a{width:28px;height:28px;line-height:28px;text-align:center;fo
 body.mob #ned .th a::before{content:'';position:absolute;inset:-8px}
 
 #acdd .ackw{font-weight:700;color:var(--sage,#4c6a51)}
+
+#arrive{pointer-events:none!important}#arrive.on.out{opacity:0!important;transform:translate(-50%,-50%) scale(.97)!important;transition:opacity .8s ease,transform .8s ease!important}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
@@ -557,7 +559,7 @@ function updateUI(now){const p=pointAt(dist);car.setLatLng([p[0],p[1]]);
  const pr=total?dist/total:0;if(Math.abs(pr-(updateUI.pr||-1))>0.0005){updateUI.pr=pr;$('pbar').style.transform='scaleX('+pr.toFixed(4)+')';}
  const ns=svcAll.find(s=>s.along>dist+0.05),nf=svcAll.find(s=>s.fuel&&s.along>dist+0.05);setT('nsvc',ns?(ns.along-dist).toFixed(0)+' km':'—');setT('nfuel',nf?(nf.along-dist).toFixed(0)+' km':'—');
  drawProf();return p;}
-function resetAnim(){pause();camInit=false;doneArr=[];doneIdx=0;dist=0;v=0;nextStop=0;runIdx=-1;arrived=false;window.__arrived=false;$('arrive').classList.remove('on');confetti.length=0;clearStop();markNext();if(car&&coords.length){updateUI(1e12);heading=targetHeading();camBear=heading;updateCar(...pointAt(0).slice(0,2));}}
+function resetAnim(){pause();camInit=false;doneArr=[];doneIdx=0;dist=0;v=0;nextStop=0;runIdx=-1;arrived=false;window.__arrived=false;clearTimeout(window.__arrT);clearTimeout(window.__arrT2);$('arrive').classList.remove('on','out');confetti.length=0;clearStop();markNext();if(car&&coords.length){updateUI(1e12);heading=targetHeading();camBear=heading;updateCar(...pointAt(0).slice(0,2));}}
 function pause(){playing=false;document.body.classList.remove('playing');engine(0,true);}
 // ---- 朝向 ----
 function targetHeading(){const A=pointAt(dist-0.15),B=pointAt(dist+0.6);let dy=B[0]-A[0],dx=(B[1]-A[1])*Math.cos(A[0]*Math.PI/180);if(Math.hypot(dx,dy)<1e-6){const C=pointAt(dist-1),E=pointAt(dist+3);dy=E[0]-C[0];dx=(E[1]-C[1])*Math.cos(C[0]*Math.PI/180);}return Math.atan2(dx,dy)*180/Math.PI;}
@@ -574,7 +576,7 @@ function drawFx(dt){if(!nPart&&!confetti.length){if(fxDirty){fg.clearRect(0,0,fx
  for(const c of confetti){c.life+=dt;c.vy+=160*dt;c.x+=c.vx*dt;c.y+=c.vy*dt;c.rot+=c.vr*dt;fg.save();fg.translate(c.x,c.y);fg.rotate(c.rot);fg.globalAlpha=Math.max(0,1-c.life/4.5);fg.fillStyle=c.col;fg.fillRect(-5,-3,10,6);fg.restore();}
  confetti=confetti.filter(c=>c.life<4.5);}
 function celebrate(){const cols=['#f44336','#ffeb3b','#4caf50','#2196f3','#ff9800','#e91e63'];for(let i=0;i<220;i++)confetti.push({x:innerWidth/2+(Math.random()-.5)*200,y:innerHeight*0.4,vx:(Math.random()-.5)*700,vy:-200-Math.random()*450,rot:Math.random()*6,vr:(Math.random()-.5)*12,col:cols[i%6],life:0});
- $('arrive').textContent='🎉 抵达终点：'+$('to').value+'！全程 '+total.toFixed(0)+' km';$('arrive').classList.add('on');}
+ $('arrive').textContent='🎉 抵达终点：'+$('to').value+'！全程 '+total.toFixed(0)+' km';const A=$('arrive');clearTimeout(window.__arrT);clearTimeout(window.__arrT2);A.classList.remove('out');A.classList.add('on');window.__arrT=setTimeout(()=>{A.classList.add('out');window.__arrT2=setTimeout(()=>A.classList.remove('on','out'),900);},3000);}
 // ---- 引擎声（WebAudio合成）----
 let AC=null,eng=null,muted=false;window.__log=[];
 function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();const o1=AC.createOscillator(),o2=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain(),m=AC.createGain();
@@ -945,5 +947,5 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/mlay.js?v=202610231441"></script>
+<script src="lib/mlay.js?v=202610231517"></script>
 </body></html>
