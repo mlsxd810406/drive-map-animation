@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610230947"><script src="lib/leaflet.js?v=202610230947"></script><script src="lib/exifr.umd.js?v=202610230947"></script><script src="lib/gcj.js?v=202610230947"></script><script src="lib/gcjlabels.js?v=202610230947"></script><script src="lib/admin.js?v=202610230947"></script><script src="lib/qsmart.js?v=202610230947"></script><script src="lib/addr.js?v=202610230947"></script><script src="lib/basemap.js?v=202610230947"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231108"><script src="lib/leaflet.js?v=202610231108"></script><script src="lib/exifr.umd.js?v=202610231108"></script><script src="lib/gcj.js?v=202610231108"></script><script src="lib/gcjlabels.js?v=202610231108"></script><script src="lib/admin.js?v=202610231108"></script><script src="lib/qsmart.js?v=202610231108"></script><script src="lib/addr.js?v=202610231108"></script><script src="lib/basemap.js?v=202610231108"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -301,6 +301,18 @@ body.mob #ned #ne_close{font-size:20px;padding:6px 10px}
 body.mob #lpring.on{display:block;position:fixed;z-index:1650;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:3px solid var(--sage,#5f7f64);background:rgba(95,127,100,.18);pointer-events:none;animation:lpr .5s ease-out forwards}
 @keyframes lpr{from{transform:scale(.3);opacity:.4}to{transform:scale(1);opacity:1}}
 body.mob.ned-on #stop,body.mob.ned-on #prof,body.mob.ned-on #mini,body.mob.ned-on #mtoast,body.mob.ned-on #recenter,body.mob.ned-on #bar{visibility:hidden}
+
+body.mob #geoset{min-width:44px!important;justify-content:center}
+body.mob #mute{position:relative}
+body.mob #mute.off::after{content:'';position:absolute;left:50%;top:50%;width:26px;height:2px;background:#b5654a;transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;pointer-events:none}
+body.mob *{-webkit-tap-highlight-color:transparent}
+body.mob #ctl,body.mob #ned,body.mob #acdd{overscroll-behavior:contain}
+body.mob button,body.mob a,body.mob .chips span{touch-action:manipulation}
+
+body.mob #stop.mini{pointer-events:auto;cursor:pointer}
+body.mob #ned .th img{width:84px;height:64px}
+body.mob #ned .th a{width:28px;height:28px;line-height:28px;text-align:center;font-size:15px;top:-6px;right:-6px;box-shadow:0 1px 4px #0004}
+body.mob #ned .th a::before{content:'';position:absolute;inset:-8px}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index3d.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>切换3D</span></a></div>
@@ -422,7 +434,7 @@ function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push
  L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);
  doneLayer=L.polyline([],{color:'#d50000',weight:3.5}).addTo(map);
  miniRoute=L.polyline(c,{color:'#ff1744',weight:2}).addTo(mini);mini.fitBounds(miniRoute.getBounds(),{padding:[8,8]});
- map.fitBounds(L.latLngBounds(c),MOB()?{paddingTopLeft:[24,$('stat').getBoundingClientRect().bottom+20],paddingBottomRight:[24,innerHeight-$('ctl').getBoundingClientRect().top+20]}:{paddingTopLeft:[$('ctl').classList.contains('hide')?40:$('ctl').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});
+ map.fitBounds(L.latLngBounds(c),MOB()?(P=>({paddingTopLeft:[P.l,P.t],paddingBottomRight:[P.r,P.b]}))(__mpad()):{paddingTopLeft:[$('ctl').classList.contains('hide')?40:$('ctl').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});
  if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
  if(!miniCar)miniCar=L.circleMarker(c[0],{radius:5,color:'#fff',fillColor:'#ffeb3b',fillOpacity:1}).addTo(mini);
  $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=[];resetAnim();ADDR.routeSet(c[0],c[c.length-1]);setPlayEn(true);}
@@ -521,7 +533,9 @@ let AC=null,eng=null,muted=false;window.__log=[];
 function initAudio(){if(AC)return;try{AC=new (window.AudioContext||window.webkitAudioContext)();const o1=AC.createOscillator(),o2=AC.createOscillator(),lp=AC.createBiquadFilter(),g=AC.createGain(),m=AC.createGain();
  o1.type='sawtooth';o2.type='square';lp.type='lowpass';lp.frequency.value=500;g.gain.value=0;m.gain.value=muted?0:1;o1.connect(lp);o2.connect(lp);lp.connect(g);g.connect(m);m.connect(AC.destination);o1.start();o2.start();eng={o1,o2,g,m,lp};}catch(e){}}
 function engine(r,idle){if(!eng)return;const t=AC.currentTime,f=idle?32:38+70*r;eng.o1.frequency.setTargetAtTime(f,t,0.15);eng.o2.frequency.setTargetAtTime(f*0.5,t,0.15);eng.lp.frequency.setTargetAtTime(350+900*r,t,0.2);eng.g.gain.setTargetAtTime(playing?(idle?0.03:0.04+0.05*r):0,t,0.2);}
-$('mute').onclick=()=>{muted=!muted;if(eng)eng.m.gain.value=muted?0:1;$('mute').lastChild.textContent=muted?'声音关':'声音开';$('mute').style.opacity=muted?.55:1;};
+$('mute').onclick=()=>{muted=!muted;if(eng)eng.m.gain.value=muted?0:1;$('mute').lastChild.textContent=muted?'声音关':'声音开';$('mute').style.opacity=muted?.55:1;$('mute').classList.toggle('off',muted);$('mute').setAttribute('aria-pressed',muted);};
+// 切到后台时暂停引擎声，回到前台恢复（iOS 会挂起音频）
+document.addEventListener('visibilitychange',()=>{try{if(!AC)return;if(document.hidden)AC.suspend();else if(playing)AC.resume();}catch(e){}});
 // ---- 路牌 ----
 let signT=null;function showSign(r){const vm=+$('speed').value;const ms=(5-2*Math.min(1,vm/150))*1000;const s=$('sign');
  const sh=r.ref?'<span class="sh" style="background:'+(/^G/.test(r.ref)?'#d32f2f':/^S/.test(r.ref)?'#f9a825':'#455a64')+'">'+r.ref+'</span>':'';
@@ -620,9 +634,12 @@ function rebuildStops(){nodeLayer.clearLayers();const ns=[];
  markNext();renderList();profBg=null;}
 function renderList(){const nc=$('ncount');if(nc)nc.textContent=nodes.length?'· '+nodes.length:'';$('nlist').innerHTML=nodes.length?nodes.map(n=>'<div class="ni"><span style="display:inline-block;transform:scale(.55);transform-origin:left center;width:20px;height:24px">'+pinHtml(n.icon,n.color)+'</span><span style="flex:1">'+(n.title||'自定义节点')+' · '+(n.off>NODE_MAX_OFF?'不在本路线 · ':(n.along||0).toFixed(0)+'km · ')+n.dwell+'s · '+n.photos.length+'图'+(n.off>5?' <b style="color:#c62828">⚠'+n.off.toFixed(1)+'km</b>':'')+'</span><a onclick="map.setView(['+n.lat+','+n.lon+'],12)">定位</a> <a onclick="editNode(\''+n.id+'\')">编辑</a> <a onclick="delNode(\''+n.id+'\')">删除</a></div>').join(''):'<div style="color:#888">（暂无，点“在地图上添加”或上传带GPS的照片）</div>';}
 // IndexedDB
-function idb(){return new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);});}
-async function saveNodes(){try{const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(JSON.parse(JSON.stringify(nodes.map(({along,off,...n})=>n))),'nodes');}catch(e){}}
-async function loadNodes(){try{const db=await idb();return await new Promise(r=>{const q=db.transaction('kv').objectStore('kv').get('nodes');q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);});}catch(e){return [];}}
+let __db=null;function idb(){if(__db)return __db;__db=new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{const d=r.result;d.onversionchange=()=>{d.close();__db=null;};d.onclose=()=>{__db=null;};res(d);};r.onerror=()=>{__db=null;rej(r.error);};});return __db;}
+async function saveNodes(){try{if(__nodesP)await __nodesP;const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(JSON.parse(JSON.stringify(nodes.map(({along,off,...n})=>n))),'nodes');}catch(e){}}
+async function loadNodes0(){try{const db=await idb();return await new Promise(r=>{const q=db.transaction('kv').objectStore('kv').get('nodes');q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);});}catch(e){return [];}}
+// 存储偶尔卡住时不阻塞页面：2.5 秒后先继续，读到后再合并；保存要等读取完成，避免覆盖
+let __nodesP=null;
+function loadNodes(){__nodesP=loadNodes0();return Promise.race([__nodesP,new Promise(r=>setTimeout(()=>r(null),2500))]).then(a=>{if(a)return a;__nodesP.then(b=>{if(!b||!b.length||Q.get('nonodes'))return;const ids=new Set(nodes.map(n=>n.id));nodes.unshift(...b.filter(n=>!ids.has(n.id)));try{rebuildStops();renderList();}catch(e){}});return [];});}
 // 图片压缩
 function compress(file,max=1280,q=0.8){return new Promise((res,rej)=>{const u=URL.createObjectURL(file),im=new Image();im.onload=()=>{const s=Math.min(1,max/Math.max(im.width,im.height));const c=document.createElement('canvas');c.width=Math.round(im.width*s);c.height=Math.round(im.height*s);c.getContext('2d').drawImage(im,0,0,c.width,c.height);URL.revokeObjectURL(u);res(c.toDataURL('image/jpeg',q));};im.onerror=rej;im.src=u;});}
 const uid=()=>Math.random().toString(36).slice(2,10);
@@ -650,10 +667,10 @@ async function handlePhotos(files){const withGps=[],noGps=[];
  for(const f of files){let g=null;try{g=await exifr.gps(f);}catch(e){}const img=await compress(f);if(g&&isFinite(g.latitude))withGps.push({lat:g.latitude,lon:g.longitude,img,name:f.name});else noGps.push(img);}
  // 300m 内的照片合并为一个节点
  const groups=[];for(const p of withGps){const g=groups.find(g=>hav([g.lat,g.lon],[p.lat,p.lon])<0.3);if(g)g.photos.push(p.img);else groups.push({lat:p.lat,lon:p.lon,photos:[p.img],name:p.name});}
- const warns=[];let last=null;for(const g of groups){const n=newNode(g.lat,g.lon,g.photos);n.title=g.name.replace(/\.[^.]+$/,'');if(n.off>5)warns.push(n.title+' 距路线 '+n.off.toFixed(1)+' km');last=n;}
+ const warns=[];let last=null;for(const g of groups){const n=newNode(g.lat,g.lon,g.photos);n.title=g.name.replace(/\.[^.]+$/,'');if(n.off>NODE_MAX_OFF)warns.push(n.title+' 距路线 '+n.off.toFixed(1)+' km');last=n;}
  rebuildStops();saveNodes();
- let m='已根据照片GPS创建 '+groups.length+' 个节点';if(warns.length)m+='；⚠ '+warns.join('，')+'（停靠点吸附到最近路线点）';
- if(noGps.length){addMode={type:'photo',photos:noGps};map.getContainer().style.cursor='crosshair';m+='；'+noGps.length+' 张照片无GPS，请在地图上点击放置位置';}
+ let m='已根据照片GPS创建 '+groups.length+' 个节点';if(warns.length)m+='；⚠ '+warns.join('，')+'（离路线较远，只在地图上显示，播放时不停靠）';
+ if(noGps.length){addMode={type:'photo',photos:noGps};if(MOB()){clearTimeout(window.__amT);window.__amT=setTimeout(()=>{if(addMode&&addMode.type==='photo'){addMode=null;map.getContainer().style.cursor='';}},45000);}map.getContainer().style.cursor='crosshair';m+='；'+noGps.length+' 张照片无GPS，请在地图上'+(MOB()?'轻点':'点击')+'放置位置';}
  msg(m);if(groups.length&&!noGps.length)map.setView([last.lat,last.lon],11);window.__lastUpload={groups:groups.length,noGps:noGps.length,warns};return window.__lastUpload;}
 
 // ---- 交互 ----
@@ -791,6 +808,7 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  new MutationObserver(()=>{if(!mq())return;const t=$('msg').textContent.trim();const mt=$('mtoast');if(!t||B.classList.contains('sheet')){mt.classList.remove('on');layout();return;}mt.textContent=t;mt.classList.add('on');layout();clearTimeout(mtT);mtT=setTimeout(()=>{mt.classList.remove('on');layout();},4000);}).observe($('msg'),{childList:true,characterData:true,subtree:true});
  // 停靠卡片：3 秒后自动收起成小条
  new MutationObserver(()=>{const sp=$('stop');if(sp.classList.contains('on')){if(!stopT0){stopT0=Date.now();if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');setTimeout(()=>{if(sp.classList.contains('on')&&mq()){sp.classList.add('mini');layout();window.__mobAvoid&&window.__mobAvoid();}},3000);}}else{stopT0=0;if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');}layout();if(sp.classList.contains('on'))mobAvoid();}).observe($('stop'),{attributes:true,attributeFilter:['class']});
+ $('stop').addEventListener('click',()=>{const sp=$('stop');if(!mq()||!sp.classList.contains('mini'))return;sp.classList.remove('mini','noimg');layout();setTimeout(()=>{if(sp.classList.contains('on')){sp.classList.add('mini');layout();}},3000);});
  let lastAv=0;setInterval(()=>{if(mq()){$('bplay').innerHTML=$('mplay').innerHTML;layout();if(!window.maplibregl&&$('stop').classList.contains('on')&&Date.now()-lastAv>700){try{const p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),r=$('stop').getBoundingClientRect();if(c.y>r.top-30&&c.y<r.bottom+10){lastAv=Date.now();mobAvoid();}}catch(_){}}}},300);
  addEventListener('resize',()=>{layout();setTimeout(layout,350);});layout();setTimeout(layout,500);
 })();
@@ -851,9 +869,19 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  addEventListener('mousemove',mv);addEventListener('mouseup',en);
  $('mplay').onclick=e=>{e.stopPropagation();(playing?$('pause'):$('play')).click();};
  $('play').addEventListener('click',()=>{if(B.classList.contains('mobP'))setTimeout(()=>setDet('peek'),60);});
+ new MutationObserver(()=>{const p=B.classList.contains('playing');if(p&&!B.__wasPlay&&B.classList.contains('mobP')&&!B.classList.contains('peek')&&!B.classList.contains('ned-on')&&!(document.activeElement&&/INPUT|TEXTAREA|SELECT/.test(document.activeElement.tagName)))setTimeout(()=>setDet('peek'),60);B.__wasPlay=p;}).observe(B,{attributes:true,attributeFilter:['class']});
  setInterval(()=>{$('mplay').innerHTML=playing?'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3"/></svg>':'<svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';},300);
  const unlock=()=>{try{initAudio();AC&&AC.resume&&AC.resume();}catch(_){}};addEventListener('touchend',unlock,{once:true,passive:true});
  if(MOB())$('mute').title='声音（轻触屏幕后可播放）';
 })();
-</script><script src="lib/mlay.js?v=202610230947"></script>
+</script><script>
+// 手机：地图可视区域留白（竖屏底部抽屉 / 横屏右侧抽屉与按钮列）
+window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=document.getElementById(id);if(!e)return null;const r=e.getBoundingClientRect();return r.width>1&&r.left<W&&r.right>0&&r.top<H&&r.bottom>0&&getComputedStyle(e).display!='none'?r:null};
+ const st=g('stat'),bar=g('bar'),ctl=g('ctl');let t=(st?st.bottom:0)+16,b=24,l=20,r=20;
+ if(document.body.classList.contains('mobL')){let x=W;if(bar)x=Math.min(x,bar.left);if(ctl&&ctl.left>W*0.3)x=Math.min(x,ctl.left);r=W-x+12;}
+ else{if(ctl)b=H-ctl.top+16;if(bar&&bar.bottom<(ctl?ctl.top:H))r=Math.max(r,W-bar.left+8);}
+ const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
+</script>
+<script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
+<script src="lib/mlay.js?v=202610231108"></script>
 </body></html>
