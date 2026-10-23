@@ -268,6 +268,20 @@ body.mob #stat{padding:7px 14px 8px!important;border-radius:16px!important}
 body.mob #stat .sk{font-size:11px!important;font-weight:500!important;letter-spacing:.04em!important;color:var(--mute)!important}
 body.mob #stat .sn b{font-size:20px!important;font-weight:600!important;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
 body.mob #stat .sn small{font-size:12px!important}body.mob #stat .sn.sm span{font-size:18px!important;font-weight:600!important;font-variant-numeric:tabular-nums}
+
+/* 手机：去掉多余分区标题；图标与文字匹配 */
+body.mob #ctl .pa-sec .pa-sh{display:none!important}
+body.mob #ctl .pa-sec{margin-bottom:8px!important}
+body.mob #ctl .ib svg,body.mob #ctl .rt-x svg,body.mob #ctl .bt svg,body.mob #ctl .btn svg{width:22px!important;height:22px!important;stroke-width:2!important}
+body.mob #ctl .rt-x svg{width:20px!important;height:20px!important}body.mob #ctl .seg button svg{width:20px!important;height:20px!important}
+body.mob #ctl .ib,body.mob #ctl .rt-x a{color:#4a443c!important;opacity:1!important}body.mob #ctl .ib{width:44px;height:44px}
+body.mob #ctl .rt-x a{font-size:15px!important;font-weight:500!important;gap:6px}
+body.mob #d3ctl{margin:4px 0 6px!important}body.mob #d3ctl .sl{display:grid!important;grid-template-columns:76px 1fr 46px;align-items:center;min-height:44px;gap:8px;margin:0!important}body.mob #d3ctl .sl span{font-size:15px!important;color:#4a443c}body.mob #d3ctl input[type=range]{height:44px!important;background:transparent!important;margin:0!important;width:100%}
+
+#recenter{display:none}
+body.mob #recenter.on{display:flex;position:fixed;z-index:1150;right:calc(env(safe-area-inset-right) + 8px);top:var(--rcT);height:44px;min-width:44px;padding:0 14px 0 12px;gap:6px;align-items:center;border:0;border-radius:22px;background:var(--paper,#faf8f4);color:var(--sage,#5f7f64);font:600 15px var(--font);box-shadow:var(--sh)}
+body.mob #recenter .i{width:20px;height:20px}
+body.mob.sheet #recenter{visibility:hidden}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index3d.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>切换3D</span></a></div>
@@ -308,7 +322,7 @@ body.mob #stat .sn small{font-size:12px!important}body.mob #stat .sn.sm span{fon
 <div class="sx"><span>下一服务区 <em id="nsvc">-</em></span><span>下一加油 <em id="nfuel" style="color:#30d158">-</em></span></div><div id="where" class="sx sw2"></div></div>
 <div id="stop"><h3 id="stopName"></h3><div id="stopTags"></div><div id="stopBody"></div><div>停留中 <span id="cd">5</span> 秒…</div></div>
 <svg id="lead"><line id="leadL" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="5 4" opacity="0"/><circle id="leadC" r="5" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></svg><div id="sign"></div><div id="arrive"></div>
-<div id="mtoast"></div><div id="mini"></div><canvas id="prof"></canvas>
+<div id="mtoast"></div><button id="recenter" title="回到车辆并跟随"><svg class="i" viewBox="0 0 24 24"><path d="M12 2l7 19-7-4-7 4z" fill="currentColor"/></svg><span>跟随</span></button><div id="mini"></div><canvas id="prof"></canvas>
 <script>/* 预览用：?pw=220 覆盖面板宽度变量 */if(/^\d{3}$/.test(new URLSearchParams(location.search).get('pw')||''))document.documentElement.style.setProperty('--pw',new URLSearchParams(location.search).get('pw')+'px');</script>
 <script>
 const $=id=>document.getElementById(id), Q=new URLSearchParams(location.search);
@@ -505,7 +519,7 @@ function frame(t){const dt=Math.min(.25,Math.max(0,(t-lastT)/1000));lastT=t;fpsN
   let ri=runIdx;if(!(ri>=0&&runs[ri]&&dist>=runs[ri].a&&dist<runs[ri].b))ri=runs.findIndex(r=>dist>=r.a&&dist<r.b);if(ri>=0&&ri!==runIdx){runIdx=ri;if(runs[ri].b-runs[ri].a>3&&!stopTimer)showSign(runs[ri]);}
   }}}engine(playing?v/vmax:0,!!stopTimer);
  if(coords.length&&car){const p=updateUI(t);
-  if(playing&&!stopTimer&&$('follow').checked){let la=pointAt(dist+v*0.8);if(window.__mobCY!=null){const sz=map.getSize(),pp=map.latLngToContainerPoint([la[0],la[1]]),q=map.containerPointToLatLng([pp.x,pp.y+(sz.y/2-window.__mobCY)]);la=[q.lat,q.lng];}const c=map.getCenter(),k=Math.min(1,dt*2.5);map.setView([c.lat+(la[0]-c.lat)*k,c.lng+(la[1]-c.lng)*k],map.getZoom(),{animate:false});}
+  if(playing&&!stopTimer&&$('follow').checked&&!window.__touching){let la=pointAt(dist+v*0.8);if(window.__mobCY!=null){const sz=map.getSize(),pp=map.latLngToContainerPoint([la[0],la[1]]),q=map.containerPointToLatLng([pp.x,pp.y+(sz.y/2-window.__mobCY)]);la=[q.lat,q.lng];}const c=map.getCenter(),k=Math.min(1,dt*2.5);map.setView([c.lat+(la[0]-c.lat)*k,c.lng+(la[1]-c.lng)*k],map.getZoom(),{animate:false});}
   if(v>0.01||!playing){const th=targetHeading();const d=((th-heading+540)%360)-180;heading+=d*Math.min(1,dt*7);carEl.style.transform='rotate('+heading+'deg)';}
   const cp=map.latLngToContainerPoint([p[0],p[1]]);if(playing)emit(cp,stopTimer?6:10+30*v/vmax,dt);}
  edgeWatch(t);drawFx(dt);if(stopTimer)drawLead();
@@ -730,6 +744,7 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
   // 底部堆叠：从抽屉顶部往上
   let y=L?H-8-parseFloat(getComputedStyle(document.documentElement).getPropertyValue('--sab')||0):R($('ctl')).top;if(!L&&B.classList.contains('sheet'))y=H-window.__pk;
   y-=8;
+  if($('recenter').classList.contains('on')){y-=44;S.setProperty('--rcT',y+'px');y-=8;}
   if(B.classList.contains('prof-on')){y-=104;S.setProperty('--profT',y+'px');y-=8;}
   const sp=$('stop');if(sp.classList.contains('on')){const sc=(c,v)=>{if(sp.classList.contains(c)!==v)sp.classList.toggle(c,v);};
    const sgOn=sg.classList.contains('on');
@@ -760,6 +775,21 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  let lastAv=0;setInterval(()=>{if(mq()){$('bplay').innerHTML=$('mplay').innerHTML;layout();if(!window.maplibregl&&$('stop').classList.contains('on')&&Date.now()-lastAv>700){try{const p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),r=$('stop').getBoundingClientRect();if(c.y>r.top-30&&c.y<r.bottom+10){lastAv=Date.now();mobAvoid();}}catch(_){}}}},300);
  addEventListener('resize',()=>{layout();setTimeout(layout,350);});layout();setTimeout(layout,500);
 })();
+
+// ===== 手机手势：单指拖动暂停跟随并显示“跟随”按钮；双指缩放=镜头远近；双指上下=俯仰（3D）=====
+(()=>{const B=document.body,mc=document.getElementById('map');window.__touching=false;
+ const tt=e=>{window.__touching=e.touches.length>0;};['touchstart','touchmove','touchend','touchcancel'].forEach(t=>mc.addEventListener(t,tt,{passive:true,capture:true}));
+ const show=v=>{$('recenter').classList.toggle('on',v);window.mobLayout&&mobLayout();};
+ const unfollow=()=>{if(!MOB())return;const f=$('follow');if(f.checked){f.checked=false;f.dispatchEvent(new Event('change',{bubbles:true}));}show(true);};
+ $('recenter').onclick=()=>{const f=$('follow');f.checked=true;f.dispatchEvent(new Event('change',{bubbles:true}));show(false);
+  try{if(window.maplibregl){camInit=false;}else{map.setView(car.getLatLng(),map.getZoom(),{animate:true});}}catch(_){}};
+ window.__mobGestures={unfollow,show};
+ map.on('dragstart',e=>{if(MOB()&&(!e||e.originalEvent!==undefined||!window.maplibregl))unfollow();});
+ if(window.maplibregl){try{map.touchZoomRotate.disableRotation();}catch(_){}
+  const z2d=z=>Math.max(0,Math.min(200,Math.round((14.6-z)/6.6*100)));
+  map.on('zoomend',e=>{if(!MOB()||!e.originalEvent)return;const s=$('dist');s.value=z2d(map.getZoom());$('dv').textContent=s.value;const nb=camBase();window.__lastBase=nb;camZ=nb;camZv=0;});
+  map.on('pitchend',e=>{if(!MOB()||!e.originalEvent)return;const s=$('pit');s.value=Math.max(0,Math.min(80,Math.round(map.getPitch())));$('pv').textContent=s.value+'°';});}
+})();
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
 (()=>{const c=$('ctl'),g=$('grab'),hd=c.querySelector('.pa-hd');let y0=null,t0=0,dy=0;
  const B=document.body;window.__det=()=>B.classList.contains('sheet')?'full':B.classList.contains('peek')?'peek':'compact';
@@ -781,4 +811,5 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  const unlock=()=>{try{initAudio();AC&&AC.resume&&AC.resume();}catch(_){}};addEventListener('touchend',unlock,{once:true,passive:true});
  if(MOB())$('mute').title='声音（轻触屏幕后可播放）';
 })();
-</script></body></html>
+</script><script src="lib/mlay.js"></script>
+</body></html>
