@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610240647"><script src="lib/leaflet.js?v=202610240647"></script><script src="lib/exifr.umd.js?v=202610240647"></script><script src="lib/gcj.js?v=202610240647"></script><script src="lib/gcjlabels.js?v=202610240647"></script><script src="lib/admin.js?v=202610240647"></script><script src="lib/qsmart.js?v=202610240647"></script><script src="lib/addr.js?v=202610240647"></script><script src="lib/basemap.js?v=202610240647"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610240703"><script src="lib/leaflet.js?v=202610240703"></script><script src="lib/exifr.umd.js?v=202610240703"></script><script src="lib/gcj.js?v=202610240703"></script><script src="lib/gcjlabels.js?v=202610240703"></script><script src="lib/admin.js?v=202610240703"></script><script src="lib/qsmart.js?v=202610240703"></script><script src="lib/addr.js?v=202610240703"></script><script src="lib/basemap.js?v=202610240703"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -365,6 +365,8 @@ body.mob #ctl .seg button{min-width:44px}
 body.mob #ctl .seg #pause{display:none!important}
 
 body.mob.mobL #ctl .seg button{min-width:40px}
+.nephr{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin:8px 0 4px}.nepb{position:relative;overflow:hidden;display:inline-flex;align-items:center;justify-content:center;height:32px;padding:0 12px;border-radius:16px;background:rgba(95,127,100,.14);color:#2f5a3a;font-weight:600;cursor:pointer}.nefi{position:absolute;inset:0;width:100%;height:100%;opacity:0;font-size:0;cursor:pointer}.nepv{margin-left:auto}#ne_photos .th img{cursor:zoom-in}
+body.mob .nd-ph,body.mob .nd-bd{pointer-events:auto!important}body.mob .nepb{height:44px;padding:0 18px;font-size:16px;border-radius:22px}body.mob .mcam{display:inline-flex!important;margin-left:0}body.mob #ne_photos{display:flex;gap:8px;overflow-x:auto;padding:4px 0}body.mob #ne_photos .th img{width:72px;height:72px;object-fit:cover;border-radius:10px}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index3d.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>切换3D</span></a></div>
@@ -398,7 +400,7 @@ body.mob.mobL #ctl .seg button{min-width:40px}
 <div id="ned"><b>编辑节点</b> <a id="ne_close" style="float:right">✕</a><div id="ne_warn" style="color:#c62828"></div>
 名称<input id="ne_title">说明（简短文字）<textarea id="ne_note" rows="3"></textarea>
 停留时间（秒）<input id="ne_dwell" type="number" min="1" max="120" value="5">图标<div id="ne_icons"></div>颜色 <input id="ne_color" type="color" value="#e91e63" style="width:60px">
-<div>照片 <label style="display:inline-block"><a onclick="this.nextElementSibling.click()">＋添加</a><input id="ne_add" type="file" accept="image/*" multiple style="display:none"></label> <label class="mcam" style="display:none"><a onclick="this.nextElementSibling.click()">📷 拍照</a><input id="ne_cam" type="file" accept="image/*" capture="environment" style="display:none"></label></div><div id="ne_photos"></div>
+<div class="nephr"><span>照片</span><label class="nepb"><input id="ne_add" type="file" accept="image/*" multiple class="nefi">＋ 添加照片</label><label class="mcam nepb"><input id="ne_cam" type="file" accept="image/*" capture="environment" class="nefi">📷 拍照</label><a id="ne_view" class="nepv" style="display:none">查看全部</a></div><div id="ne_photos"></div>
 <button id="ne_save">保存</button> <button id="ne_del">删除节点</button></div>
 <div id="stat"><div class="sg"><div><div class="sk">已行驶</div><div class="sn"><b id="done">0</b><small>km</small></div></div><div><div class="sk">剩余</div><div class="sn"><b id="left">-</b><small>km</small></div></div><div><div class="sk">剩余时间</div><div class="sn sm"><span id="eta">-</span></div></div></div>
 <div class="pb"><i id="pbar"></i></div><div class="sx"><span>全程 <em id="tot">-</em> km</span><span>驾驶约 <em id="drv">-</em></span><span title="按路号识别的高速路段里程占比">高速 <em id="hwp">-</em></span></div>
@@ -700,15 +702,15 @@ window.delNode=id=>{if(!confirm('删除该节点？'))return;nodes=nodes.filter(
 window.editNode=id=>{const n=nodes.find(x=>x.id===id);if(!n)return;$('ned').dataset.id=id;$('ne_title').value=n.title;$('ne_note').value=n.note;$('ne_dwell').value=n.dwell;$('ne_color').value=n.color;
  $('ne_icons').innerHTML=Object.entries(ICONS).map(([k,v])=>'<span class="icb'+(k===n.icon?' sel':'')+'" data-k="'+k+'" title="'+v[0]+'">'+pinHtml(k,n.color)+'<br>'+v[0]+'</span>').join('');
  $('ne_icons').querySelectorAll('.icb').forEach(e=>e.onclick=()=>{$('ne_icons').querySelectorAll('.icb').forEach(x=>x.classList.remove('sel'));e.classList.add('sel');});
- $('ne_photos').innerHTML=n.photos.map((p,i)=>'<span class="th"><img src="'+p+'"><a onclick="rmPhoto(\''+id+'\','+i+')">✕</a></span>').join('');
+ $('ne_view').style.display=n.photos.length?'':'none';$('ne_view').onclick=()=>window.openPhotos&&openPhotos(n,0);$('ne_photos').innerHTML=n.photos.map((p,i)=>'<span class="th"><img src="'+p+'" onclick="window.openPhotos&&openPhotos(nodes.find(x=>x.id===\''+id+'\'),'+i+')"><a onclick="rmPhoto(\''+id+'\','+i+')">✕</a></span>').join('');
  $('ne_warn').textContent=n.off>5?'⚠ 拍摄点距路线 '+n.off.toFixed(1)+' km，停靠点已吸附到最近路线点':'';$('ned').style.display='block';};
-window.rmPhoto=(id,i)=>{const n=nodes.find(x=>x.id===id);n.photos.splice(i,1);saveNodes();editNode(id);renderList();};
+window.rmPhoto=(id,i)=>{const n=nodes.find(x=>x.id===id);n.photos.splice(i,1);rebuildStops();saveNodes();editNode(id);renderList();};
 function bindNodeUI(){
  $('nadd').onclick=()=>{addMode={type:'click'};msg('请在地图上点击要添加节点的位置');map.getContainer().style.cursor='crosshair';};
  map.on('click',e=>{if(!addMode)return;const m=addMode;addMode=null;map.getContainer().style.cursor='';msg('');
   const si=snapInfo(e.latlng.lat,e.latlng.lng);const n=m.type==='click'?newNode(si.lat,si.lon):newNode(e.latlng.lat,e.latlng.lng,m.photos);editNode(n.id);});
  $('nfile').onchange=async e=>{await handlePhotos([...e.target.files]);e.target.value='';};
- $('ne_add').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
+ $('ne_add').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';rebuildStops();saveNodes();editNode(n.id);renderList();if(window.ntoast)ntoast('已添加照片 · 共 '+n.photos.length+' 张',{color:'#43a047'});};
  $('ne_save').onclick=()=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);n.title=$('ne_title').value.trim();n.note=$('ne_note').value.trim();n.dwell=Math.max(1,Math.min(120,+$('ne_dwell').value||5));n.color=$('ne_color').value;const s=$('ne_icons').querySelector('.sel');if(s)n.icon=s.dataset.k;$('ned').style.display='none';rebuildStops();saveNodes();};
  $('ne_del').onclick=()=>delNode($('ned').dataset.id);$('ne_close').onclick=()=>$('ned').style.display='none';
  $('nexp').onclick=()=>{const b=new Blob([JSON.stringify({version:1,nodes:nodes.map(({along,off,...n})=>n)})],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(b);a.download='自驾节点.json';a.click();};
@@ -894,7 +896,7 @@ $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').
  try{['movestart','zoomstart','pitchstart','dragstart'].forEach(k=>map.on(k,ev=>{if(ev&&ev.originalEvent){window.__mapMoving=1;cancel();}}));['moveend'].forEach(k=>map.on(k,()=>{window.__mapMoving=0;}));}catch(_){}
  // 节点卡片打开/关闭状态
  new MutationObserver(()=>{const on=$('ned').style.display==='block';if(B.classList.contains('ned-on')!==on)B.classList.toggle('ned-on',on);if(on&&MOB()&&window.__setDet&&__det()==='full')__setDet('compact');}).observe($('ned'),{attributes:true,attributeFilter:['style']});
- $('ne_cam').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
+ $('ne_cam').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';rebuildStops();saveNodes();editNode(n.id);renderList();if(window.ntoast)ntoast('已添加照片 · 共 '+n.photos.length+' 张',{color:'#43a047'});};
  $('m_photo').onclick=()=>$('nfile').click();
  const tip=m=>{msg(m);};
  window.shareURL=()=>{const u=new URL(location.href.split('?')[0]);const f=$('from').value.trim(),to=$('to').value.trim(),v=$('via').value.trim();if(f)u.searchParams.set('from',f);if(to)u.searchParams.set('to',to);if(v)u.searchParams.set('via',v);{const ll={};[f,to,...v.split('\n')].map(x=>x.trim()).filter(Boolean).forEach(x=>{const c=ADDR.PICK[x];if(c&&!/^-?\d/.test(x))ll[x]=[+c[0].toFixed(5),+c[1].toFixed(5)];});if(Object.keys(ll).length)u.searchParams.set('ll',JSON.stringify(ll));}
@@ -937,6 +939,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/qr.js?v=202610240647"></script><script src="lib/extras.js?v=202610240647"></script>
-<script src="lib/mlay.js?v=202610240647"></script>
+<script src="lib/qr.js?v=202610240703"></script><script src="lib/extras.js?v=202610240703"></script>
+<script src="lib/mlay.js?v=202610240703"></script>
 </body></html>
