@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231744"><script src="lib/leaflet.js?v=202610231744"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231744"><script src="lib/maplibre-gl.js?v=202610231744"></script><script src="lib/exifr.umd.js?v=202610231744"></script><script src="lib/gcj.js?v=202610231744"></script><script src="lib/gcjlabels.js?v=202610231744"></script><script src="lib/admin.js?v=202610231744"></script><script src="lib/qsmart.js?v=202610231744"></script><script src="lib/addr.js?v=202610231744"></script><script src="lib/basemap.js?v=202610231744"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231847"><script src="lib/leaflet.js?v=202610231847"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231847"><script src="lib/maplibre-gl.js?v=202610231847"></script><script src="lib/exifr.umd.js?v=202610231847"></script><script src="lib/gcj.js?v=202610231847"></script><script src="lib/gcjlabels.js?v=202610231847"></script><script src="lib/admin.js?v=202610231847"></script><script src="lib/qsmart.js?v=202610231847"></script><script src="lib/addr.js?v=202610231847"></script><script src="lib/basemap.js?v=202610231847"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -213,7 +213,7 @@ body.mob #stat .pb,body.mob #stat .sx,body.mob #stat .sw2{display:none!important
 body.mob #stat .sg{gap:10px!important}body.mob #stat .sk{font-size:10px!important;margin-bottom:0!important}body.mob #stat .sn b{font-size:17px!important}body.mob #stat .sn.sm span{font-size:14px!important}
 body.mob #bar{top:var(--barT,60px)!important;bottom:auto!important;right:calc(env(safe-area-inset-right) + 8px)!important;left:auto!important;display:flex!important;flex-direction:column;width:auto!important;padding:3px!important;gap:2px!important;transition:opacity .25s}
 body.mob #bar button,body.mob #bar a{width:44px!important;height:44px!important;min-height:44px;justify-content:center;padding:0!important}
-body.mob #bar span{display:none!important}body.mob #bar .on{background:var(--sagebg,#e7eee5)!important;color:var(--sage,#6f8a6a)!important}
+body.mob #bar span{display:none!important}body.mob #bar .i{width:28px!important;height:28px!important;stroke-width:2.1!important}body.mob #bar button,body.mob #bar a{color:var(--ink,#2b2620)!important}body.mob #bar .on{color:var(--sage,#5f7f64)!important}body.mob #bar .on{background:var(--sagebg,#e7eee5)!important;color:var(--sage,#6f8a6a)!important}
 body.mob.sheet #bar{opacity:0;pointer-events:none}
 body.mob #prof{display:none!important}body.mob.prof-on #prof{display:block!important;left:8px!important;right:auto!important;width:calc(100vw - 16px)!important;height:104px!important;bottom:auto!important;top:var(--profT)!important}
 body.mob #mini{display:none!important}body.mob.mini-on #mini{display:block!important;left:calc(env(safe-area-inset-left) + 8px)!important;right:auto!important;bottom:auto!important;top:var(--miniT)!important;width:128px!important;height:96px!important}
@@ -306,7 +306,7 @@ body.mob.ned-on #stop,body.mob.ned-on #prof,body.mob.ned-on #mini,body.mob.ned-o
 
 body.mob #geoset{min-width:44px!important;justify-content:center}
 body.mob #mute{position:relative}
-body.mob #mute.off::after{content:'';position:absolute;left:50%;top:50%;width:26px;height:2px;background:#b5654a;transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;pointer-events:none}
+body.mob #mute.off::after{content:'';position:absolute;left:50%;top:50%;width:34px;height:3px;background:#b5654a;transform:translate(-50%,-50%) rotate(-45deg);border-radius:2px;pointer-events:none}
 body.mob *{-webkit-tap-highlight-color:transparent}
 body.mob #ctl,body.mob #ned,body.mob #acdd{overscroll-behavior:contain}
 body.mob button,body.mob a,body.mob .chips span{touch-action:manipulation}
@@ -955,7 +955,7 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
  $('ne_cam').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
  $('m_photo').onclick=()=>$('nfile').click();
  const tip=m=>{msg(m);};
- window.shareURL=()=>{const u=new URL(location.href.split('?')[0]);const f=$('from').value.trim(),to=$('to').value.trim(),v=$('via').value.trim();if(f)u.searchParams.set('from',f);if(to)u.searchParams.set('to',to);if(v)u.searchParams.set('via',v);
+ window.shareURL=()=>{const u=new URL(location.href.split('?')[0]);const f=$('from').value.trim(),to=$('to').value.trim(),v=$('via').value.trim();if(f)u.searchParams.set('from',f);if(to)u.searchParams.set('to',to);if(v)u.searchParams.set('via',v);{const ll={};[f,to,...v.split('\n')].map(x=>x.trim()).filter(Boolean).forEach(x=>{const c=ADDR.PICK[x];if(c&&!/^-?\d/.test(x))ll[x]=[+c[0].toFixed(5),+c[1].toFixed(5)];});if(Object.keys(ll).length)u.searchParams.set('ll',JSON.stringify(ll));}
   const nn=nodes.map(n=>[+n.lat.toFixed(5),+n.lon.toFixed(5),n.title||'',n.note||'',n.dwell,n.icon,n.color]);const js=JSON.stringify(nn);if(nn.length&&js.length<1800)u.searchParams.set('n',js);return u.toString();};
  $('m_share').onclick=async()=>{const url=shareURL(),title='自驾路线：'+$('from').value+' → '+$('to').value;window.__lastShare=url;
   try{if(navigator.share){await navigator.share({title,text:title,url});return;}}catch(e){if(e&&e.name==='AbortError')return;}
@@ -995,6 +995,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/qr.js?v=202610231744"></script><script src="lib/extras.js?v=202610231744"></script>
-<script src="lib/mlay.js?v=202610231744"></script>
+<script src="lib/qr.js?v=202610231847"></script><script src="lib/extras.js?v=202610231847"></script>
+<script src="lib/mlay.js?v=202610231847"></script>
 </body></html>
