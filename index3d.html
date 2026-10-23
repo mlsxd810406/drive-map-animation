@@ -282,6 +282,25 @@ body.mob #d3ctl{margin:4px 0 6px!important}body.mob #d3ctl .sl{display:grid!impo
 body.mob #recenter.on{display:flex;position:fixed;z-index:1150;right:calc(env(safe-area-inset-right) + 8px);top:var(--rcT);height:44px;min-width:44px;padding:0 14px 0 12px;gap:6px;align-items:center;border:0;border-radius:22px;background:var(--paper,#faf8f4);color:var(--sage,#5f7f64);font:600 15px var(--font);box-shadow:var(--sh)}
 body.mob #recenter .i{width:20px;height:20px}
 body.mob.sheet #recenter{visibility:hidden}
+
+.mact,.mhint{display:none}
+body.mob [data-fold=fnodes],body.mob [data-fold=fexp],body.mob #ctl .pa-ft,body.mob #fnodes,body.mob #fexp{display:none!important}
+body.mob #ctl .mact{display:block;background:#fff;border-radius:14px;overflow:hidden;margin:0 0 6px}
+body.mob #ctl .mact .bt{display:flex;width:100%;border:0!important;border-radius:0!important;min-height:50px!important;justify-content:flex-start!important;align-items:center;font-size:17px!important;font-weight:500!important;color:#2b2722!important;background:#fff!important;padding:0 12px!important;gap:10px;box-shadow:none!important}
+body.mob #ctl .mact .bt svg{width:22px!important;height:22px!important;stroke:#4a443c;stroke-width:2!important;fill:none}
+body.mob #ctl .mact .bt+.bt{border-top:.5px solid rgba(60,50,40,.12)!important}
+body.mob #ctl .mact .bt::after{content:'›';margin-left:auto;font-size:22px;color:#b8b0a3}
+body.mob #ctl .mhint{display:block;font-size:13px;color:var(--mute,#8a847a);text-align:center;padding:4px 0 2px}
+body.mob .mcam{display:inline-block!important;margin-left:12px}
+body.mob #ned{position:fixed!important;left:0!important;right:0!important;top:auto!important;bottom:0!important;width:auto!important;max-height:72vh;overflow:auto;z-index:1700!important;border-radius:18px 18px 0 0!important;padding:14px 16px calc(14px + env(safe-area-inset-bottom))!important;font-size:16px!important;box-shadow:0 -8px 30px rgba(40,30,20,.25)!important}
+body.mob #ned input,body.mob #ned textarea{font-size:16px!important;min-height:40px;box-sizing:border-box}
+body.mob #ned button{min-height:44px;font-size:16px;padding:0 18px;border-radius:12px}
+body.mob #ned .icb{min-width:44px;min-height:44px}
+body.mob #ned #ne_close{font-size:20px;padding:6px 10px}
+#lpring{display:none}
+body.mob #lpring.on{display:block;position:fixed;z-index:1650;width:56px;height:56px;margin:-28px 0 0 -28px;border-radius:50%;border:3px solid var(--sage,#5f7f64);background:rgba(95,127,100,.18);pointer-events:none;animation:lpr .5s ease-out forwards}
+@keyframes lpr{from{transform:scale(.3);opacity:.4}to{transform:scale(1);opacity:1}}
+body.mob.ned-on #stop,body.mob.ned-on #prof,body.mob.ned-on #mini,body.mob.ned-on #mtoast,body.mob.ned-on #recenter,body.mob.ned-on #bar{visibility:hidden}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
@@ -303,7 +322,7 @@ body.mob.sheet #recenter{visibility:hidden}
 <div class="pa-sec"><div class="pa-sh"><span>镜头</span></div>
  <label class="sw"><span>镜头跟随</span><input type="checkbox" id="follow" checked></label>
  <div id="d3ctl"><div class="sl"><span>镜头远近</span><input id="dist" type="range" min="0" max="200" step="1" value="100" autocomplete="off"><span id="dv">100</span></div><div class="sl"><span>镜头俯仰</span><input id="pit" type="range" min="0" max="80" step="1" value="60"><span id="pv">60°</span></div><div class="sl"><span>地形夸张</span><input id="exag" type="range" min="0" max="3" step="0.1" value="1.5"><span id="exv">1.5×</span></div></div></div>
-<div class="pa-ft"><button class="bt ol2" data-fold="fnodes"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>自定义节点</span><em id="ncount" class="num"></em></button><button class="bt ol2" data-fold="fexp"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg><span>导出与分享</span></button></div>
+<div class="mact"><button class="bt" id="m_photo"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 8"/></svg><span>从相册添加节点</span></button><button class="bt" id="m_share"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V3M7 8l5-5 5 5"/><path d="M5 12v7a2 2 0 002 2h10a2 2 0 002-2v-7"/></svg><span>分享路线</span></button><button class="bt" id="m_img"><svg class="i" viewBox="0 0 24 24"><rect x="5" y="2" width="14" height="20" rx="2.5"/><path d="M8 7h8M8 11h8M8 15h5"/></svg><span>保存行程图</span></button></div><div class="mhint">在地图上长按可添加节点，轻点节点可编辑</div><div class="pa-ft"><button class="bt ol2" data-fold="fnodes"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg><span>自定义节点</span><em id="ncount" class="num"></em></button><button class="bt ol2" data-fold="fexp"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg><span>导出与分享</span></button></div>
 <div id="fnodes" class="fold">
 <div class="row"><button class="btn" id="nadd"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg>地图添加</button><label style="display:contents"><button class="btn" onclick="this.nextElementSibling.click()"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.8"/><path d="M21 16l-5-5-9 8"/></svg>上传照片</button><input id="nfile" type="file" accept="image/*" multiple style="display:none"></label></div>
 <div class="row"><button class="btn" id="nexp"><svg class="i" viewBox="0 0 24 24"><path d="M12 4v11M7 10l5 5 5-5M5 20h14"/></svg>导出 JSON</button><label style="display:contents"><button class="btn" onclick="this.nextElementSibling.click()"><svg class="i" viewBox="0 0 24 24"><path d="M12 15V4M7 9l5-5 5 5M5 20h14"/></svg>导入 JSON</button><input id="nimp" type="file" accept=".json,application/json" style="display:none"></label></div>
@@ -315,14 +334,14 @@ body.mob.sheet #recenter{visibility:hidden}
 <div id="ned"><b>编辑节点</b> <a id="ne_close" style="float:right">✕</a><div id="ne_warn" style="color:#c62828"></div>
 名称<input id="ne_title">说明（简短文字）<textarea id="ne_note" rows="3"></textarea>
 停留时间（秒）<input id="ne_dwell" type="number" min="1" max="120" value="5">图标<div id="ne_icons"></div>颜色 <input id="ne_color" type="color" value="#e91e63" style="width:60px">
-<div>照片 <label style="display:inline-block"><a onclick="this.nextElementSibling.click()">＋添加</a><input id="ne_add" type="file" accept="image/*" multiple style="display:none"></label></div><div id="ne_photos"></div>
+<div>照片 <label style="display:inline-block"><a onclick="this.nextElementSibling.click()">＋添加</a><input id="ne_add" type="file" accept="image/*" multiple style="display:none"></label> <label class="mcam" style="display:none"><a onclick="this.nextElementSibling.click()">📷 拍照</a><input id="ne_cam" type="file" accept="image/*" capture="environment" style="display:none"></label></div><div id="ne_photos"></div>
 <button id="ne_save">保存</button> <button id="ne_del">删除节点</button></div>
 <div id="stat"><div class="sg"><div><div class="sk">已行驶</div><div class="sn"><b id="done">0</b><small>km</small></div></div><div><div class="sk">剩余</div><div class="sn"><b id="left">-</b><small>km</small></div></div><div><div class="sk">剩余时间</div><div class="sn sm"><span id="eta">-</span></div></div></div>
 <div class="pb"><i id="pbar"></i></div><div class="sx"><span>全程 <em id="tot">-</em> km</span><span>驾驶约 <em id="drv">-</em></span><span title="按路号识别的高速路段里程占比">高速 <em id="hwp">-</em></span></div>
 <div class="sx"><span>下一服务区 <em id="nsvc">-</em></span><span>下一加油 <em id="nfuel" style="color:#30d158">-</em></span></div><div id="where" class="sx sw2"></div></div>
 <div id="stop"><h3 id="stopName"></h3><div id="stopTags"></div><div id="stopBody"></div><div>停留中 <span id="cd">5</span> 秒…</div></div>
 <svg id="lead"><line id="leadL" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="5 4" opacity="0"/><circle id="leadC" r="5" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></svg><div id="sign"></div><div id="arrive"></div>
-<div id="mtoast"></div><button id="recenter" title="回到车辆并跟随"><svg class="i" viewBox="0 0 24 24"><path d="M12 2l7 19-7-4-7 4z" fill="currentColor"/></svg><span>跟随</span></button><div id="mini"></div><canvas id="prof"></canvas>
+<div id="mtoast"></div><div id="lpring"></div><button id="recenter" title="回到车辆并跟随"><svg class="i" viewBox="0 0 24 24"><path d="M12 2l7 19-7-4-7 4z" fill="currentColor"/></svg><span>跟随</span></button><div id="mini"></div><canvas id="prof"></canvas>
 <script>/* 预览用：?pw=220 覆盖面板宽度变量 */if(/^\d{3}$/.test(new URLSearchParams(location.search).get('pw')||''))document.documentElement.style.setProperty('--pw',new URLSearchParams(location.search).get('pw')+'px');</script>
 <script>
 const $=id=>document.getElementById(id), Q=new URLSearchParams(location.search);
@@ -780,7 +799,7 @@ function panCar(dx,dy){map.panBy([dx,dy],{duration:900,easing:t=>1-Math.pow(1-t,
 $('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').join('');$('vehsel').value=VEH_I;$('dist').value=100;$('dv').textContent='100';camZ=camBase();window.__lastBase=camZ;$('sw').href='index.html'+location.search;$('exag').oninput=e=>{$('exv').textContent=e.target.value+'×';map.setTerrain(+e.target.value>0?{source:'dem',exaggeration:+e.target.value}:null);};$('pit').oninput=e=>{$('pv').textContent=e.target.value+'°';if(!playing)map.easeTo({pitch:+e.target.value});};
 $('dist').oninput=e=>{$('dv').textContent=e.target.value;const nb=camBase();camZ+=nb-(window.__lastBase??nb);window.__lastBase=nb;if(!playing)map.easeTo({zoom:camBase(),padding:camPad(),duration:400});};
 $('tog').addEventListener('click',()=>{if(!playing&&camInit)map.easeTo({padding:camPad(),duration:300});});
-if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.__ready=mapReady.then(loadNodes).then(a=>{if(Q.get('nonodes'))a=[];nodes=a;if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
+if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.__ready=mapReady.then(loadNodes).then(a=>{if(Q.get('nonodes'))a=[];nodes=a;try{const un=JSON.parse(Q.get('n')||'[]');if(un.length){const key=n=>n.lat.toFixed(4)+','+n.lon.toFixed(4);const ks=new Set(nodes.map(key));un.forEach(([lat,lon,title,note,dwell,icon,color])=>{const n={id:uid(),lat,lon,title,note,dwell:dwell||5,icon:icon||'camera',color:color||'#e91e63',photos:[]};if(!ks.has(key(n)))nodes.push(n);});saveNodes();}}catch(_){}if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
 </script>
 <script>
 
@@ -847,6 +866,31 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
   const z2d=z=>Math.max(0,Math.min(200,Math.round((14.6-z)/6.6*100)));
   map.on('zoomend',e=>{if(!MOB()||!e.originalEvent)return;const s=$('dist');s.value=z2d(map.getZoom());$('dv').textContent=s.value;const nb=camBase();window.__lastBase=nb;camZ=nb;camZv=0;});
   map.on('pitchend',e=>{if(!MOB()||!e.originalEvent)return;const s=$('pit');s.value=Math.max(0,Math.min(80,Math.round(map.getPitch())));$('pv').textContent=s.value+'°';});}
+})();
+
+// ===== 手机：长按添加节点 / 分享路线 / 保存行程图 =====
+(()=>{const B=document.body,mc=document.getElementById('map');let t=null,x0=0,y0=0;
+ const ll=(x,y)=>{if(window.maplibregl){const p=map.unproject([x,y]);return [p.lat,p.lng];}const p=map.containerPointToLatLng([x,y]);return [p.lat,p.lng];};
+ const cancel=()=>{clearTimeout(t);t=null;$('lpring').classList.remove('on');};
+ mc.addEventListener('touchstart',e=>{if(!MOB()||e.touches.length!==1){cancel();return;}const r=mc.getBoundingClientRect();x0=e.touches[0].clientX;y0=e.touches[0].clientY;
+  t=setTimeout(()=>{t=null;try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}const [la,lo]=ll(x0-r.left,y0-r.top);let lat=la,lon=lo;try{const si=snapInfo(la,lo);if(si.off<=NODE_MAX_OFF){lat=si.lat;lon=si.lon;}}catch(_){}
+   const n=newNode(lat,lon);n.title='节点 '+nodes.length;saveNodes();window.__lpAdded=n.id;editNode(n.id);setTimeout(()=>$('lpring').classList.remove('on'),300);},500);
+  setTimeout(()=>{if(t){const g=$('lpring');g.style.left=x0+'px';g.style.top=y0+'px';g.classList.remove('on');void g.offsetWidth;g.classList.add('on');}},120);},{passive:true});
+ mc.addEventListener('touchmove',e=>{if(!t)return;const p=e.touches[0];if(e.touches.length>1||Math.hypot(p.clientX-x0,p.clientY-y0)>10)cancel();},{passive:true});
+ ['touchend','touchcancel'].forEach(k=>mc.addEventListener(k,()=>{if(t)cancel();},{passive:true}));
+ // 节点卡片打开/关闭状态
+ new MutationObserver(()=>{const on=$('ned').style.display==='block';if(B.classList.contains('ned-on')!==on)B.classList.toggle('ned-on',on);if(on&&MOB()&&window.__setDet&&__det()==='full')__setDet('compact');}).observe($('ned'),{attributes:true,attributeFilter:['style']});
+ $('ne_cam').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
+ $('m_photo').onclick=()=>$('nfile').click();
+ const tip=m=>{msg(m);};
+ window.shareURL=()=>{const u=new URL(location.href.split('?')[0]);const f=$('from').value.trim(),to=$('to').value.trim(),v=$('via').value.trim();if(f)u.searchParams.set('from',f);if(to)u.searchParams.set('to',to);if(v)u.searchParams.set('via',v);
+  const nn=nodes.map(n=>[+n.lat.toFixed(5),+n.lon.toFixed(5),n.title||'',n.note||'',n.dwell,n.icon,n.color]);const js=JSON.stringify(nn);if(nn.length&&js.length<1800)u.searchParams.set('n',js);return u.toString();};
+ $('m_share').onclick=async()=>{const url=shareURL(),title='自驾路线：'+$('from').value+' → '+$('to').value;window.__lastShare=url;
+  try{if(navigator.share){await navigator.share({title,text:title,url});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+  try{await navigator.clipboard.writeText(url);tip('链接已复制，可粘贴发送');}catch(_){prompt('复制此链接分享：',url);}};
+ $('m_img').onclick=()=>{const orig=dl;dl=async(blob,name)=>{dl=orig;window.__lastImg=blob.size;const file=new File([blob],'自驾行程图.png',{type:'image/png'});
+   try{if(navigator.canShare&&navigator.canShare({files:[file]})){await navigator.share({files:[file],title:'自驾行程图'});return;}}catch(e){if(e&&e.name==='AbortError')return;}
+   const u=URL.createObjectURL(blob);const w=window.open(u,'_blank');if(!w){orig(blob,name);}else tip('长按图片即可保存到相册');};$('sumpng').click();};
 })();
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
 (()=>{const c=$('ctl'),g=$('grab'),hd=c.querySelector('.pa-hd');let y0=null,t0=0,dy=0;
