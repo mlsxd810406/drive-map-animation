@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231108"><script src="lib/leaflet.js?v=202610231108"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231108"><script src="lib/maplibre-gl.js?v=202610231108"></script><script src="lib/exifr.umd.js?v=202610231108"></script><script src="lib/gcj.js?v=202610231108"></script><script src="lib/gcjlabels.js?v=202610231108"></script><script src="lib/admin.js?v=202610231108"></script><script src="lib/qsmart.js?v=202610231108"></script><script src="lib/addr.js?v=202610231108"></script><script src="lib/basemap.js?v=202610231108"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231131"><script src="lib/leaflet.js?v=202610231131"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231131"><script src="lib/maplibre-gl.js?v=202610231131"></script><script src="lib/exifr.umd.js?v=202610231131"></script><script src="lib/gcj.js?v=202610231131"></script><script src="lib/gcjlabels.js?v=202610231131"></script><script src="lib/admin.js?v=202610231131"></script><script src="lib/qsmart.js?v=202610231131"></script><script src="lib/addr.js?v=202610231131"></script><script src="lib/basemap.js?v=202610231131"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -863,7 +863,7 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
  $('bprof').onclick=()=>{B.classList.toggle('prof-on');$('bprof').classList.toggle('on',B.classList.contains('prof-on'));layout();try{drawProf(true);}catch(_){}};
  $('bmini').onclick=()=>{B.classList.toggle('mini-on');$('bmini').classList.toggle('on',B.classList.contains('mini-on'));layout();setTimeout(()=>{try{mini.invalidateSize();}catch(_){}},60);};
  // 面板内提示 -> 手机浮动提示
- new MutationObserver(()=>{if(!mq())return;const t=$('msg').textContent.trim();const mt=$('mtoast');if(!t||B.classList.contains('sheet')){mt.classList.remove('on');layout();return;}mt.textContent=t;mt.classList.add('on');layout();clearTimeout(mtT);mtT=setTimeout(()=>{mt.classList.remove('on');layout();},4000);}).observe($('msg'),{childList:true,characterData:true,subtree:true});
+ new MutationObserver(()=>{if(!mq())return;const t=$('msg').textContent.trim();const mt=$('mtoast');window.__msgT=Date.now();if(t&&B.classList.contains('sheet')&&/失败|无法|错误|不可用/.test(t))try{$('msg').scrollIntoView({block:'nearest',behavior:'smooth'});}catch(_){}if(!t||B.classList.contains('sheet')){mt.classList.remove('on');layout();return;}mt.textContent=t;mt.classList.add('on');layout();clearTimeout(mtT);mtT=setTimeout(()=>{mt.classList.remove('on');layout();},4000);}).observe($('msg'),{childList:true,characterData:true,subtree:true});
  // 停靠卡片：3 秒后自动收起成小条
  new MutationObserver(()=>{const sp=$('stop');if(sp.classList.contains('on')){if(!stopT0){stopT0=Date.now();if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');setTimeout(()=>{if(sp.classList.contains('on')&&mq()){sp.classList.add('mini');layout();window.__mobAvoid&&window.__mobAvoid();}},3000);}}else{stopT0=0;if(sp.classList.contains('mini')||sp.classList.contains('noimg'))sp.classList.remove('mini','noimg');}layout();if(sp.classList.contains('on'))mobAvoid();}).observe($('stop'),{attributes:true,attributeFilter:['class']});
  $('stop').addEventListener('click',()=>{const sp=$('stop');if(!mq()||!sp.classList.contains('mini'))return;sp.classList.remove('mini','noimg');layout();setTimeout(()=>{if(sp.classList.contains('on')){sp.classList.add('mini');layout();}},3000);});
@@ -889,13 +889,15 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
 // ===== 手机：长按添加节点 / 分享路线 / 保存行程图 =====
 (()=>{const B=document.body,mc=document.getElementById('map');let t=null,x0=0,y0=0;
  const ll=(x,y)=>{if(window.maplibregl){const p=map.unproject([x,y]);return [p.lat,p.lng];}const p=map.containerPointToLatLng([x,y]);return [p.lat,p.lng];};
- const cancel=()=>{clearTimeout(t);t=null;$('lpring').classList.remove('on');};
- mc.addEventListener('touchstart',e=>{if(!MOB()||e.touches.length!==1){cancel();return;}const r=mc.getBoundingClientRect();x0=e.touches[0].clientX;y0=e.touches[0].clientY;
-  t=setTimeout(()=>{t=null;try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}const [la,lo]=ll(x0-r.left,y0-r.top);let lat=la,lon=lo;try{const si=snapInfo(la,lo);if(si.off<=NODE_MAX_OFF){lat=si.lat;lon=si.lon;}}catch(_){}
-   const n=newNode(lat,lon);n.title='节点 '+nodes.length;saveNodes();window.__lpAdded=n.id;editNode(n.id);setTimeout(()=>$('lpring').classList.remove('on'),300);},500);
-  setTimeout(()=>{if(t){const g=$('lpring');g.style.left=x0+'px';g.style.top=y0+'px';g.classList.remove('on');void g.offsetWidth;g.classList.add('on');}},120);},{passive:true});
- mc.addEventListener('touchmove',e=>{if(!t)return;const p=e.touches[0];if(e.touches.length>1||Math.hypot(p.clientX-x0,p.clientY-y0)>10)cancel();},{passive:true});
- ['touchend','touchcancel'].forEach(k=>mc.addEventListener(k,()=>{if(t)cancel();},{passive:true}));
+ const cancel=()=>{clearTimeout(t);t=null;tok++;$('lpring').classList.remove('on');};
+ let nT=0,tok=0;const inMap=e=>mc.contains(e.target);
+ document.addEventListener('touchstart',e=>{nT=e.touches.length;if(!inMap(e))return;if(!MOB()||e.touches.length!==1){cancel();return;}const r=mc.getBoundingClientRect();x0=e.touches[0].clientX;y0=e.touches[0].clientY;
+  const fire=f=>{const my=++tok;t=setTimeout(()=>requestAnimationFrame(()=>setTimeout(()=>{if(my===tok&&t)f();},0)),500);};fire(()=>{t=null;if(nT!==1||window.__mapMoving){cancel();return;}try{navigator.vibrate&&navigator.vibrate(15);}catch(_){}const [la,lo]=ll(x0-r.left,y0-r.top);let lat=la,lon=lo;try{const si=snapInfo(la,lo);if(si.off<=NODE_MAX_OFF){lat=si.lat;lon=si.lon;}}catch(_){}
+   const n=newNode(lat,lon);n.title='节点 '+nodes.length;saveNodes();window.__lpAdded=n.id;editNode(n.id);setTimeout(()=>$('lpring').classList.remove('on'),300);});
+  setTimeout(()=>{if(t){const g=$('lpring');g.style.left=x0+'px';g.style.top=y0+'px';g.classList.remove('on');void g.offsetWidth;g.classList.add('on');}},120);},{passive:true,capture:true});
+ document.addEventListener('touchmove',e=>{nT=e.touches.length;if(!t)return;const p=e.touches[0];if(e.touches.length>1||Math.hypot(p.clientX-x0,p.clientY-y0)>10)cancel();},{passive:true,capture:true});
+ ['touchend','touchcancel'].forEach(k=>document.addEventListener(k,e=>{nT=e.touches.length;if(t)cancel();},{passive:true,capture:true}));
+ try{['movestart','zoomstart','pitchstart','dragstart'].forEach(k=>map.on(k,ev=>{if(ev&&ev.originalEvent){window.__mapMoving=1;cancel();}}));['moveend'].forEach(k=>map.on(k,()=>{window.__mapMoving=0;}));}catch(_){}
  // 节点卡片打开/关闭状态
  new MutationObserver(()=>{const on=$('ned').style.display==='block';if(B.classList.contains('ned-on')!==on)B.classList.toggle('ned-on',on);if(on&&MOB()&&window.__setDet&&__det()==='full')__setDet('compact');}).observe($('ned'),{attributes:true,attributeFilter:['style']});
  $('ne_cam').onchange=async e=>{const n=nodes.find(x=>x.id===$('ned').dataset.id);for(const f of e.target.files)n.photos.push(await compress(f));e.target.value='';saveNodes();editNode(n.id);renderList();};
@@ -913,7 +915,7 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
 (()=>{const c=$('ctl'),g=$('grab'),hd=c.querySelector('.pa-hd');let y0=null,t0=0,dy=0;
  const B=document.body;window.__det=()=>B.classList.contains('sheet')?'full':B.classList.contains('peek')?'peek':'compact';
- const setDet=d=>{B.classList.toggle('sheet',d==='full');B.classList.toggle('peek',d==='peek');if(d!=='full')c.scrollTop=0;window.mobLayout&&mobLayout();[0,120,260,460].forEach(t=>setTimeout(()=>window.mobLayout&&mobLayout(),t));};window.__setDet=setDet;
+ const setDet=d=>{const wasFull=B.classList.contains('sheet');B.classList.toggle('sheet',d==='full');if(wasFull&&d!=='full'&&Date.now()-(window.__msgT||0)<6000&&$('msg').textContent.trim()){const m=$('msg'),t=m.textContent;setTimeout(()=>{m.textContent='';m.textContent=t;},30);}B.classList.toggle('peek',d==='peek');if(d!=='full')c.scrollTop=0;window.mobLayout&&mobLayout();[0,120,260,460].forEach(t=>setTimeout(()=>window.mobLayout&&mobLayout(),t));};window.__setDet=setDet;
  const open=v=>setDet(v?'full':'compact');window.__sheet=open;
  const offs=()=>{const H=c.offsetHeight,cs=getComputedStyle(document.documentElement),sab=parseFloat(cs.getPropertyValue('--sabpx'))||0;return {full:0,compact:Math.max(0,H-(window.__pk||250)-sab),peek:Math.max(0,H-(window.__pk2||60)-sab)};};
  let base=0,lastY=0,lastT=0,vel=0;
@@ -941,5 +943,5 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/mlay.js?v=202610231108"></script>
+<script src="lib/mlay.js?v=202610231131"></script>
 </body></html>
