@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231354"><script src="lib/leaflet.js?v=202610231354"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231354"><script src="lib/maplibre-gl.js?v=202610231354"></script><script src="lib/exifr.umd.js?v=202610231354"></script><script src="lib/gcj.js?v=202610231354"></script><script src="lib/gcjlabels.js?v=202610231354"></script><script src="lib/admin.js?v=202610231354"></script><script src="lib/qsmart.js?v=202610231354"></script><script src="lib/addr.js?v=202610231354"></script><script src="lib/basemap.js?v=202610231354"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231441"><script src="lib/leaflet.js?v=202610231441"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231441"><script src="lib/maplibre-gl.js?v=202610231441"></script><script src="lib/exifr.umd.js?v=202610231441"></script><script src="lib/gcj.js?v=202610231441"></script><script src="lib/gcjlabels.js?v=202610231441"></script><script src="lib/admin.js?v=202610231441"></script><script src="lib/qsmart.js?v=202610231441"></script><script src="lib/addr.js?v=202610231441"></script><script src="lib/basemap.js?v=202610231441"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -313,6 +313,8 @@ body.mob #stop.mini{pointer-events:auto;cursor:pointer}
 body.mob #ned .th img{width:84px;height:64px}
 body.mob #ned .th a{width:28px;height:28px;line-height:28px;text-align:center;font-size:15px;top:-6px;right:-6px;box-shadow:0 1px 4px #0004}
 body.mob #ned .th a::before{content:'';position:absolute;inset:-8px}
+
+#acdd .ackw{font-weight:700;color:var(--sage,#4c6a51)}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
@@ -943,5 +945,5 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/mlay.js?v=202610231354"></script>
+<script src="lib/mlay.js?v=202610231441"></script>
 </body></html>
