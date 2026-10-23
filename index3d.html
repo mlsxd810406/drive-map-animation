@@ -239,6 +239,35 @@ body.mobL.sheet #ctl.pa{transform:none!important}
 body.mobL #stat{right:auto!important;width:auto!important;max-width:calc(100vw - 260px)}
 body.mobL #bar{top:calc(env(safe-area-inset-top) + 8px)!important}
 body.mobL.prof-on #prof{width:calc(100vw - 92px - env(safe-area-inset-right))!important}
+
+/* ===== 手机 v2：三段抽屉 + iOS 风格排版 ===== */
+:root{--peek2:calc(var(--peek2px,58px) + env(safe-area-inset-bottom))}
+body.mobP #ctl.pa{transition:transform .46s cubic-bezier(.22,1.18,.36,1)!important;box-shadow:0 -6px 30px rgba(40,30,20,.18)!important;padding-left:14px!important;padding-right:14px!important}
+body.mobP #ctl.pa.drag{transition:none!important}
+body.mobP.peek:not(.sheet) #ctl.pa{transform:translateY(calc(100% - var(--peek2)))}
+body.mob #ctl{font-size:16px}
+body.mob #ctl .pa-hd h1{display:none!important}
+body.mobP #ctl .pa-hd{min-height:48px!important;margin:0!important}
+body.mob #ctl .pa-hd #psum{font-size:16px!important;font-weight:600!important;color:var(--ink)!important;text-align:left!important;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+body.mob .mplay{width:44px!important;height:44px!important}
+body.mobP .grab{padding:7px 0 3px!important;min-height:14px}body.mobP .grab i{width:40px!important;height:5px!important;background:rgba(60,50,40,.28)!important}
+body.mob #ctl .rt-f small{display:none!important}
+body.mob #ctl .rt-f{padding:0!important}
+body.mob #ctl .rt-row{min-height:46px!important;gap:8px!important}
+body.mob #ctl .rt-f input{font:600 17px/1.3 var(--font)!important;height:44px;color:var(--ink)!important;letter-spacing:-.01em}
+body.mob #ctl .rt-f input::placeholder{font-weight:400;color:#a9a294}
+body.mob #ctl .rt-x{margin:2px 0 6px!important;font-size:14px!important}body.mobP:not(.sheet) #ctl .rt-x{display:none!important}
+body.mob #ctl .pa-act{margin:4px 0 8px!important;gap:8px!important}
+body.mob #ctl .pa-act .bt{min-height:46px!important;font-size:16px!important;font-weight:600!important;border-radius:12px!important}
+body.mob #ctl .pa-sh,body.mob #ctl .pa-sh span{font-size:13px!important;font-weight:600!important;color:var(--mute)!important;letter-spacing:.02em!important}
+body.mob #ctl .pa-sec{margin-bottom:10px!important}
+body.mob #ctl .chips span,body.mob #ctl .seg button{font-size:15px!important}
+body.mob #ctl label.sw span,body.mob #ctl .sl span{font-size:15px!important}
+body.mob #vehsel{font-size:16px!important;border-radius:12px!important}
+body.mob #stat{padding:7px 14px 8px!important;border-radius:16px!important}
+body.mob #stat .sk{font-size:11px!important;font-weight:500!important;letter-spacing:.04em!important;color:var(--mute)!important}
+body.mob #stat .sn b{font-size:20px!important;font-weight:600!important;font-variant-numeric:tabular-nums;letter-spacing:-.02em}
+body.mob #stat .sn small{font-size:12px!important}body.mob #stat .sn.sm span{font-size:18px!important;font-weight:600!important;font-variant-numeric:tabular-nums}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
@@ -748,7 +777,7 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
  function peek(){const c=$('ctl'),a=$('plan').closest('.pa-act')||$('plan');const y=a.getBoundingClientRect().top-c.getBoundingClientRect().top+c.scrollTop;return Math.round(y+a.offsetHeight+12);}
  function layout(){const m=mq();B.classList.toggle('mob',m);B.classList.toggle('mobL',m&&land());B.classList.toggle('mobP',m&&!land());if(!m){window.__mobTop=null;window.__mobCY=null;return;}
   const S=document.documentElement.style,H=innerHeight,W=innerWidth,L=land();
-  if(!L){const pk=peek();if(Math.abs(pk-(window.__pk||0))>1){window.__pk=pk;S.setProperty('--peekpx',pk+'px');}}
+  if(!L){const pk=peek();if(Math.abs(pk-(window.__pk||0))>1){window.__pk=pk;S.setProperty('--peekpx',pk+'px');}const hd=$('ctl').querySelector('.pa-hd'),p2=Math.round(hd.getBoundingClientRect().bottom-$('ctl').getBoundingClientRect().top+6);if(p2>20&&Math.abs(p2-(window.__pk2||0))>1){window.__pk2=p2;S.setProperty('--peek2px',p2+'px');}}
   const st=R($('stat')),top0=st.bottom+8;S.setProperty('--barT',(L?st.top:top0)+'px');
   const bar=R($('bar'));
   // 顶部：小地图（左），路牌（居中，在小地图下方或旁边）
@@ -770,7 +799,7 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
   const mt=$('mtoast');if(mt.classList.contains('on')){y-=mt.offsetHeight;S.setProperty('--mtT',y+'px');y-=8;}
   const tt=$('toast');if(tt&&getComputedStyle(tt).opacity>0.05){y-=tt.offsetHeight;S.setProperty('--toastT',y+'px');y-=8;}else if(tt)S.setProperty('--toastT',(y-(tt.offsetHeight||36))+'px');
   const topCam=Math.max(top0,sg.classList.contains('on')?signT+R(sg).height*0.8:0);window.__mobTop=y;window.__mobTopT=topCam;window.__mobCY=(topCam+y)/2;}
- window.mobLayout=layout;
+ window.mobLayout=layout;if(mq()){$('from').placeholder='起点 · 地名或地址';$('to').placeholder='终点 · 地名或地址';}
  // 视口/键盘（iOS visualViewport）
  const vv=window.visualViewport;function vvU(){if(!vv)return;const S=document.documentElement.style;const kb=Math.max(0,innerHeight-vv.height-vv.offsetTop);S.setProperty('--kb',kb+'px');S.setProperty('--vvh',vv.height+'px');}
  if(vv){vv.addEventListener('resize',vvU);vv.addEventListener('scroll',vvU);}
@@ -791,13 +820,21 @@ if(MOB()){$('exag').value=0.8;$('exv').textContent='0.8×';}bindNodeUI();window.
 })();
 // 移动端底部抽屉：轻点/拖动展开；首次触摸解锁 iOS 音频
 (()=>{const c=$('ctl'),g=$('grab'),hd=c.querySelector('.pa-hd');let y0=null,t0=0,dy=0;
- const open=v=>{document.body.classList.toggle('sheet',v);if(!v)c.scrollTop=0;window.mobLayout&&mobLayout();};window.__sheet=open;
- let lt=0;const st=e=>{if(e.touches)lt=1;else if(lt)return;if(!MOB())return;y0=e.touches?e.touches[0].clientY:e.clientY;t0=Date.now();dy=0;c.classList.add('drag');};
- const mv=e=>{if(y0==null||document.body.classList.contains('mobL'))return;dy=(e.touches?e.touches[0].clientY:e.clientY)-y0;const op=document.body.classList.contains('sheet');const base=op?0:c.offsetHeight-parseFloat(getComputedStyle(c).getPropertyValue('--peek')||76);if(op&&c.scrollTop>0)return;c.style.transform='translateY('+Math.max(0,base+dy)+'px)';};
- const en=e=>{if(y0==null)return;if(!e.changedTouches&&lt)return;c.classList.remove('drag');c.style.transform='';const op=document.body.classList.contains('sheet');if(Math.abs(dy)<10&&Date.now()-t0<1500){if(!(e.target.closest&&e.target.closest('button')))open(!op);}else if(dy<-40)open(true);else if(dy>40)open(false);y0=null;};
+ const B=document.body;window.__det=()=>B.classList.contains('sheet')?'full':B.classList.contains('peek')?'peek':'compact';
+ const setDet=d=>{B.classList.toggle('sheet',d==='full');B.classList.toggle('peek',d==='peek');if(d!=='full')c.scrollTop=0;window.mobLayout&&mobLayout();[0,120,260,460].forEach(t=>setTimeout(()=>window.mobLayout&&mobLayout(),t));};window.__setDet=setDet;
+ const open=v=>setDet(v?'full':'compact');window.__sheet=open;
+ const offs=()=>{const H=c.offsetHeight,cs=getComputedStyle(document.documentElement),sab=parseFloat(cs.getPropertyValue('--sabpx'))||0;return {full:0,compact:Math.max(0,H-(window.__pk||250)-sab),peek:Math.max(0,H-(window.__pk2||60)-sab)};};
+ let base=0,lastY=0,lastT=0,vel=0;
+ let lt=0;const st=e=>{if(e.touches)lt=1;else if(lt)return;if(!MOB()||B.classList.contains('mobL'))return;y0=e.touches?e.touches[0].clientY:e.clientY;t0=Date.now();dy=0;vel=0;lastY=y0;lastT=t0;base=offs()[window.__det()];c.classList.add('drag');};
+ const mv=e=>{if(y0==null)return;const y=e.touches?e.touches[0].clientY:e.clientY;dy=y-y0;const now=Date.now();if(now>lastT){vel=0.7*vel+0.3*((y-lastY)/(now-lastT));lastY=y;lastT=now;}if(window.__det()==='full'&&c.scrollTop>0)return;const o=offs();let t=base+dy;if(t<0)t=t*0.3;if(t>o.peek)t=o.peek+(t-o.peek)*0.3;c.style.transform='translateY('+t+'px)';};
+ const en=e=>{if(y0==null)return;if(!e.changedTouches&&lt)return;c.classList.remove('drag');c.style.transform='';const tap=Math.abs(dy)<8&&Date.now()-t0<500;const onBtn=e.target.closest&&e.target.closest('button');
+  if(B.classList.contains('mobL')){if(tap&&!onBtn)open(!B.classList.contains('sheet'));y0=null;return;}
+  if(tap){if(!onBtn){const d=window.__det();setDet(e.target.closest&&e.target.closest('.grab')?(d==='peek'?'compact':d==='compact'?'full':'peek'):(d==='peek'?'compact':d==='compact'?'full':'compact'));}}
+  else{const o=offs(),p=base+dy+vel*180;const ds=['full','compact','peek'];let best='compact',bd=1e9;for(const d of ds){const v=Math.abs(o[d]-p);if(v<bd){bd=v;best=d;}}setDet(best);}y0=null;};
  [g,hd].forEach(el=>{el.addEventListener('touchstart',st,{passive:true});el.addEventListener('touchmove',mv,{passive:true});el.addEventListener('touchend',en);el.addEventListener('mousedown',st);});
  addEventListener('mousemove',mv);addEventListener('mouseup',en);
  $('mplay').onclick=e=>{e.stopPropagation();(playing?$('pause'):$('play')).click();};
+ $('play').addEventListener('click',()=>{if(B.classList.contains('mobP'))setTimeout(()=>setDet('peek'),60);});
  setInterval(()=>{$('mplay').innerHTML=playing?'<svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke="currentColor" stroke-width="3"/></svg>':'<svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg>';},300);
  const unlock=()=>{try{initAudio();AC&&AC.resume&&AC.resume();}catch(_){}};addEventListener('touchend',unlock,{once:true,passive:true});
  if(MOB())$('mute').title='声音（轻触屏幕后可播放）';
