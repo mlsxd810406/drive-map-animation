@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231517"><script src="lib/leaflet.js?v=202610231517"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231517"><script src="lib/maplibre-gl.js?v=202610231517"></script><script src="lib/exifr.umd.js?v=202610231517"></script><script src="lib/gcj.js?v=202610231517"></script><script src="lib/gcjlabels.js?v=202610231517"></script><script src="lib/admin.js?v=202610231517"></script><script src="lib/qsmart.js?v=202610231517"></script><script src="lib/addr.js?v=202610231517"></script><script src="lib/basemap.js?v=202610231517"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231545"><script src="lib/leaflet.js?v=202610231545"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231545"><script src="lib/maplibre-gl.js?v=202610231545"></script><script src="lib/exifr.umd.js?v=202610231545"></script><script src="lib/gcj.js?v=202610231545"></script><script src="lib/gcjlabels.js?v=202610231545"></script><script src="lib/admin.js?v=202610231545"></script><script src="lib/qsmart.js?v=202610231545"></script><script src="lib/addr.js?v=202610231545"></script><script src="lib/basemap.js?v=202610231545"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -317,6 +317,52 @@ body.mob #ned .th a::before{content:'';position:absolute;inset:-8px}
 #acdd .ackw{font-weight:700;color:var(--sage,#4c6a51)}
 
 #arrive{pointer-events:none!important}#arrive.on.out{opacity:0!important;transform:translate(-50%,-50%) scale(.97)!important;transition:opacity .8s ease,transform .8s ease!important}
+
+/* 进度条拖动 */
+#stat .pb.seekable{position:relative;overflow:visible!important;cursor:pointer}
+#stat .pb.seekable::before{content:'';position:absolute;left:0;right:0;top:-10px;bottom:-10px}
+#stat .pb.seekable #pbar{border-radius:2px;overflow:hidden}
+#stat .pb .knob{position:absolute;top:50%;left:0;width:12px;height:12px;margin:-6px 0 0 -6px;border-radius:50%;background:#fff;box-shadow:0 1px 4px rgba(0,0,0,.35);opacity:0;transform:scale(.6);transition:opacity .2s,transform .2s;pointer-events:none}
+#stat .pb.seekable:hover .knob,body.scrubbing #stat .pb .knob{opacity:1;transform:scale(1)}
+body.scrubbing #pbar{transition:none!important}
+#prof{cursor:pointer;touch-action:none}
+body.mob #stat .pb{display:block!important;margin:6px 2px 1px!important;height:3px!important}
+body.mob #stat .pb .knob{opacity:1;transform:scale(.85)}
+#nextst{display:inline-flex;align-items:center;justify-content:center}
+/* 行程总结卡 */
+#tripsum{position:fixed;z-index:1500;right:24px;top:50%;width:340px;box-sizing:border-box;padding:18px 18px 14px;border-radius:22px;background:rgba(255,255,255,.9);-webkit-backdrop-filter:blur(24px) saturate(1.4);backdrop-filter:blur(24px) saturate(1.4);box-shadow:0 12px 40px rgba(40,30,20,.22),0 0 0 .5px rgba(60,50,40,.1);font-family:var(--font);color:#2b2722;opacity:0;transform:translateY(-50%) scale(.96);pointer-events:none;transition:opacity .35s ease,transform .45s cubic-bezier(.2,.9,.3,1.1);visibility:hidden}
+#tripsum.pre{visibility:visible}
+#tripsum.on{opacity:1;transform:translateY(-50%) scale(1);pointer-events:auto;visibility:visible}
+#tripsum .ts-x{position:absolute;right:8px;top:8px;width:32px;height:32px;border:0;border-radius:50%;background:rgba(60,50,40,.07);display:flex;align-items:center;justify-content:center;cursor:pointer;padding:0}
+#tripsum .ts-x svg{width:14px;height:14px;stroke:#6f6a62;stroke-width:2.4;fill:none}
+#tripsum .ts-h{font-size:13px;font-weight:600;color:var(--sage,#5f7f64);letter-spacing:.04em}
+#tripsum .ts-r{font-size:17px;font-weight:600;margin:4px 36px 14px 0;line-height:1.3;overflow:hidden;text-overflow:ellipsis;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
+#tripsum .ts-g{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:14px}
+#tripsum .ts-g div{background:rgba(60,50,40,.045);border-radius:14px;padding:10px 12px}
+#tripsum .ts-g b{display:block;font-size:22px;font-weight:650;font-variant-numeric:tabular-nums;letter-spacing:-.01em}
+#tripsum .ts-g b small{font-size:13px;font-weight:500;margin-left:2px;color:#6f6a62}
+#tripsum .ts-g span{font-size:12.5px;color:#8a847a}
+#tripsum .ts-b{display:flex;gap:8px}
+#tripsum .ts-b button{flex:1;display:flex;align-items:center;justify-content:center;gap:6px;min-height:44px;border:0;border-radius:13px;font:600 15px var(--font);cursor:pointer;background:rgba(60,50,40,.07);color:#2b2722}
+#tripsum .ts-b button:first-child{background:var(--sage,#5f7f64);color:#fff}
+#tripsum .ts-b svg{width:18px;height:18px;stroke:currentColor;stroke-width:2;fill:none}
+body.mob #tripsum{left:10px;right:10px;width:auto;top:auto;bottom:calc(var(--peekpx,96px) + 10px);transform:translateY(12px) scale(.98);padding:16px 16px 12px}
+body.mob #tripsum.on{transform:none}
+body.mob.mobL #tripsum{left:10px;right:auto;width:320px;bottom:10px}
+body.mob.sheet #tripsum{visibility:hidden}
+
+body.mob #tripsum .ts-g{grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px}
+body.mob #tripsum .ts-g div{padding:8px 6px;border-radius:12px;text-align:center}
+body.mob #tripsum .ts-g b{font-size:17px}
+body.mob #tripsum .ts-g b small{font-size:11px;margin-left:1px}
+body.mob #tripsum .ts-g span{font-size:11.5px}
+body.mob #tripsum .ts-r{font-size:16px;margin-bottom:10px}
+body.mob.ts-on #prof,body.mob.ts-on #mini,body.mob.ts-on #stop{visibility:hidden}
+body.mob #ctl .seg button{min-width:44px}
+
+body.mob #ctl .seg #pause{display:none!important}
+
+body.mob.mobL #ctl .seg button{min-width:40px}
 </style></head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
@@ -535,7 +581,7 @@ let profSz=null;function drawProf(full){const cv=$('prof');if(!cv.clientWidth||!
  const k=total/elevCum[elevCum.length-1];const zs=elev.map(e=>e[3]),mn=Math.min(...zs),mx=Math.max(...zs);const X=d=>40+(W-50)*d/total,Y=z=>H-18-(H-40)*(z-mn)/((mx-mn)||1);
  if(!profBg||full){g.clearRect(0,0,W,H);g.beginPath();g.moveTo(X(0),H-18);elev.forEach((e,i)=>g.lineTo(X(elevCum[i]*k),Y(e[3])));g.lineTo(X(total),H-18);{const gr=g.createLinearGradient(0,14,0,H-18);gr.addColorStop(0,'rgba(125,155,129,.8)');gr.addColorStop(1,'rgba(125,155,129,.08)');g.fillStyle=gr;g.fill();g.strokeStyle='rgba(175,200,170,.9)';g.lineWidth=1.2;g.stroke();}
   g.fillStyle='rgba(255,255,255,.86)';g.font='600 11.5px "PingFang SC","HarmonyOS Sans SC","Microsoft YaHei UI","Microsoft YaHei",system-ui,-apple-system,"Noto Sans CJK SC",sans-serif';g.fillText('海拔剖面  '+Math.round(mn)+'–'+Math.round(mx)+' m',45,14);g.fillText(Math.round(mx)+'m',2,Y(mx)+4);g.fillText(Math.round(mn)+'m',2,Y(mn));g.fillText('0',X(0),H-4);g.fillText(total.toFixed(0)+' km',X(total)-45,H-4);{const st=total>=1000?500:200;g.save();g.font='500 10.5px sans-serif';const tw=g.measureText(total.toFixed(0)+' km').width;for(let d=st;d<total;d+=st){const x=X(d);g.fillStyle='rgba(255,255,255,.55)';g.fillRect(x-0.5,H-18,1,4);const t=d+'',w=g.measureText(t).width;if(x-w/2<X(0)+14||x+w/2>X(total)-tw-8)continue;g.fillStyle='rgba(255,255,255,.75)';g.fillText(t,x-w/2,H-4);}g.restore();}
-  stops.forEach(s=>{g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});{window.__profKeys=[];const N=Math.max(20,Math.min(elev.length,Math.floor((W-50)/3))),pts=[];for(let j=0;j<N;j++){const i=Math.round(j*(elev.length-1)/(N-1));pts.push([elevCum[i]*k,elev[i][3]]);}
+  stops.forEach(s=>{if(s.node)return;g.fillStyle=s.fuel?'#43a047':'#ff9800';g.fillRect(X(s.along)-1,H-22,3,6);});stops.forEach(s=>{if(!s.node)return;const x=X(s.along);g.beginPath();g.moveTo(x,H-18);g.lineTo(x,H-27);g.strokeStyle='rgba(233,30,99,.8)';g.lineWidth=1.2;g.stroke();g.beginPath();g.arc(x,H-30,4,0,7);g.fillStyle='#e91e63';g.fill();g.lineWidth=1.5;g.strokeStyle='#fff';g.stroke();});{window.__profKeys=[];const N=Math.max(20,Math.min(elev.length,Math.floor((W-50)/3))),pts=[];for(let j=0;j<N;j++){const i=Math.round(j*(elev.length-1)/(N-1));pts.push([elevCum[i]*k,elev[i][3]]);}
   const rng=(mx-mn)||1,thr=Math.max(120,rng*0.18),cand=[];
   const prom=(j,up)=>{let a=Infinity,b=Infinity;const z=pts[j][1];for(let q=j-1;q>=0;q--){const d=up?z-pts[q][1]:pts[q][1]-z;if(d<0)break;a=Math.min(a,Infinity);}let l=z,r=z;for(let q=j-1;q>=0;q--){if(up?pts[q][1]>z:pts[q][1]<z)break;l=up?Math.min(l,pts[q][1]):Math.max(l,pts[q][1]);}for(let q=j+1;q<N;q++){if(up?pts[q][1]>z:pts[q][1]<z)break;r=up?Math.min(r,pts[q][1]):Math.max(r,pts[q][1]);}return up?z-Math.max(l,r):Math.min(l,r)-z;};
   for(let j=1;j<N-1;j++){const z=pts[j][1];if(z>=pts[j-1][1]&&z>pts[j+1][1]){const p=prom(j,true);if(p>=thr)cand.push([p,j,1]);}else if(z<=pts[j-1][1]&&z<pts[j+1][1]){const p=prom(j,false);if(p>=thr)cand.push([p,j,0]);}}
@@ -604,13 +650,13 @@ function frame(t){const dt=Math.min(.25,Math.max(0,(t-lastT)/1000));lastT=t;fpsN
   if(v>0.01||!playing){const th=targetHeading();const d=((th-heading+540)%360)-180;heading+=d*Math.min(1,dt*7);}
   updateCar(p[0],p[1]);
   if(playing&&$('follow').checked&&!window.__touching){camInit=true;
-   const vm=+$('speed').value,sp=Math.min(1,v/Math.max(1,vm)),Wk=Math.max(3,vm*0.9),h0=hAt(dist);let cv=0;for(let k=1;k<=4;k++){cv=Math.max(cv,Math.abs(((hAt(dist+Wk*k/4)-h0+540)%360)-180));}cv=Math.min(1,cv/70);
+   const vm=+$('speed').value,sp=Math.min(1,v/Math.max(1,vm)),Wk=Math.max(3,vm*0.9),h0=hAt(dist);let cv=0;for(let k=1;k<=4;k++){cv=Math.max(cv,Math.abs(((hAt(dist+Wk*k/4)-h0+540)%360)-180));}cv=Math.min(1,cv/70);window.__cvS=(window.__cvS??cv)+(cv-(window.__cvS??cv))*Math.min(1,dt*1.2);cv=window.__cvS;window.__spS=(window.__spS??0)+(Math.min(1,v/Math.max(1,+$('speed').value))-(window.__spS??0))*Math.min(1,dt*0.8);
    const ns=nextStop<stops.length?stops[nextStop].along-dist:1e9,ap=Math.max(0,Math.min(1,1-ns/Math.max(6,vm*1.6)));const hw=runs[runIdx]&&runs[runIdx].hw;
-   const base=camBase(),tz=stopTimer?base+1.1:base-(hw?0.7:0.35)*sp*(1-cv)+0.8*cv+1.0*ap+0.1*Math.sin(t*0.00027);
+   const base=camBase(),tz=stopTimer?base+1.1:base-(hw?0.7:0.35)*window.__spS*(1-cv)+0.8*cv+1.0*ap+0.1*Math.sin(t*0.00027);
    camZv+=(6*(tz-camZ)-4.9*camZv)*dt;camZ+=camZv*dt;Object.assign(__cam,{base,tz,camZ});
    if(stopTimer)camBear+=dt*7;else{const d=((heading-camBear+540)%360)-180;camBear+=d*Math.min(1,dt*(1.1+cv));}
    const ahead=0,la=pointAt(dist+ahead);
-   const c=map.getCenter(),k=Math.min(1,dt*(stopTimer?(window.__mobTop!=null?5:1.5):6)),tp=Math.min(85,+$('pit').value+2.5*Math.sin(t*0.0004)-6*ap);
+   const c=map.getCenter(),k=Math.min(1,dt*(stopTimer?(window.__mobTop!=null?5:1.5):6)),tp=Math.max(20,Math.min(85,+$('pit').value+5*window.__spS*(1-cv)-9*cv+2.5*Math.sin(t*0.0004)-6*ap));Object.assign(__cam,{cv,sp:window.__spS,tp,pitBase:+$('pit').value});
    map.jumpTo({center:[c.lng+(la[1]-c.lng)*k,c.lat+(la[0]-c.lat)*k],zoom:camZ,bearing:camBear+2.5*Math.sin(t*0.00021),pitch:map.getPitch()+(tp-map.getPitch())*Math.min(1,dt*1.5),padding:camPad()});}
   const cp=map.latLngToContainerPoint([p[0],p[1]]);if(playing)emit(cp,stopTimer?6:10+30*v/vmax,dt);}
  edgeWatch(t);drawFx(dt);if(stopTimer)drawLead();
@@ -947,5 +993,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/mlay.js?v=202610231517"></script>
+<script src="lib/qr.js?v=202610231545"></script><script src="lib/extras.js?v=202610231545"></script>
+<script src="lib/mlay.js?v=202610231545"></script>
 </body></html>
