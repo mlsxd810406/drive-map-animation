@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610231131"><script src="lib/leaflet.js?v=202610231131"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231131"><script src="lib/maplibre-gl.js?v=202610231131"></script><script src="lib/exifr.umd.js?v=202610231131"></script><script src="lib/gcj.js?v=202610231131"></script><script src="lib/gcjlabels.js?v=202610231131"></script><script src="lib/admin.js?v=202610231131"></script><script src="lib/qsmart.js?v=202610231131"></script><script src="lib/addr.js?v=202610231131"></script><script src="lib/basemap.js?v=202610231131"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=202610231354"><script src="lib/leaflet.js?v=202610231354"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=202610231354"><script src="lib/maplibre-gl.js?v=202610231354"></script><script src="lib/exifr.umd.js?v=202610231354"></script><script src="lib/gcj.js?v=202610231354"></script><script src="lib/gcjlabels.js?v=202610231354"></script><script src="lib/admin.js?v=202610231354"></script><script src="lib/qsmart.js?v=202610231354"></script><script src="lib/addr.js?v=202610231354"></script><script src="lib/basemap.js?v=202610231354"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -375,7 +375,7 @@ map.addControl(new maplibregl.NavigationControl({visualizePitch:true}),'top-righ
 map.latLngToContainerPoint=ll=>map.project([ll.lng??ll[1],ll.lat??ll[0]]);
 map.setView=(ll,z)=>map.jumpTo({center:[ll.lng??ll[1],ll.lat??ll[0]],zoom:z});
 window.gotoLL=(lat,lon,z)=>map.flyTo({center:[lon,lat],zoom:z,pitch:+$('pit').value,duration:1500});
-let mapReady=new Promise(r=>map.on('load',r));
+let mapReady=new Promise(r=>{let done=0;const go=()=>{if(!done){done=1;r();}};map.on('load',go);map.once('style.load',()=>setTimeout(go,4000));setTimeout(()=>{if(map.isStyleLoaded&&map.isStyleLoaded())go();},8000);});
 function applyBase(m){mapReady.then(()=>{const V=(id,on)=>map.getLayer(id)&&map.setLayoutProperty(id,'visibility',on?'visible':'none');
  if(m==='tdt'&&!map.getSource('tdt')){map.addSource('tdt',{type:'raster',tiles:[0,1,2,3,4,5,6,7].map(i=>BM.U.tdt(BM.key()).replace('{s}',i)),tileSize:256,maxzoom:18});map.addLayer({id:'tdt',type:'raster',source:'tdt'},map.getLayer('rd-c')?'rd-c':undefined);}
  V('g',m==='google');V('lbl',m==='google');V('esri',m!=='google');V('et',m==='esri');V('eb',m==='esri');V('tdt',m==='tdt');});}
@@ -689,7 +689,7 @@ function rebuildStops(){nodeMk.forEach(m=>m.remove());nodeMk=[];const ns=[],lk=[
  markNext();renderList();profBg=null;}
 function renderList(){const nc=$('ncount');if(nc)nc.textContent=nodes.length?'· '+nodes.length:'';$('nlist').innerHTML=nodes.length?nodes.map(n=>'<div class="ni"><span style="display:inline-block;transform:scale(.55);transform-origin:left center;width:20px;height:24px">'+pinHtml(n.icon,n.color)+'</span><span style="flex:1">'+(n.title||'自定义节点')+' · '+(n.off>NODE_MAX_OFF?'不在本路线 · ':(n.along||0).toFixed(0)+'km · ')+n.dwell+'s · '+n.photos.length+'图'+(n.off>5?' <b style="color:#c62828">⚠'+n.off.toFixed(1)+'km</b>':'')+'</span><a onclick="gotoLL('+n.lat+','+n.lon+',12)">定位</a> <a onclick="editNode(\''+n.id+'\')">编辑</a> <a onclick="delNode(\''+n.id+'\')">删除</a></div>').join(''):'<div style="color:#888">（暂无，点“在地图上添加”或上传带GPS的照片）</div>';}
 // IndexedDB
-let __db=null;function idb(){if(__db)return __db;__db=new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{const d=r.result;d.onversionchange=()=>{d.close();__db=null;};d.onclose=()=>{__db=null;};res(d);};r.onerror=()=>{__db=null;rej(r.error);};});return __db;}
+let __db=null;function idb(){if(__db)return __db;__db=new Promise((res,rej)=>{const r=indexedDB.open('drivemap',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>{const d=r.result;d.onversionchange=()=>{d.close();__db=null;};d.onclose=()=>{__db=null;};res(d);};r.onerror=()=>{__db=null;rej(r.error);};});return __db;}addEventListener('pagehide',()=>{try{if(__db)__db.then(d=>d.close());__db=null;}catch(e){}});
 async function saveNodes(){try{if(__nodesP)await __nodesP;const db=await idb();db.transaction('kv','readwrite').objectStore('kv').put(JSON.parse(JSON.stringify(nodes.map(({along,off,...n})=>n))),'nodes');}catch(e){}}
 async function loadNodes0(){try{const db=await idb();return await new Promise(r=>{const q=db.transaction('kv').objectStore('kv').get('nodes');q.onsuccess=()=>r(q.result||[]);q.onerror=()=>r([]);});}catch(e){return [];}}
 // 存储偶尔卡住时不阻塞页面：2.5 秒后先继续，读到后再合并；保存要等读取完成，避免覆盖
@@ -943,5 +943,5 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/mlay.js?v=202610231131"></script>
+<script src="lib/mlay.js?v=202610231354"></script>
 </body></html>
