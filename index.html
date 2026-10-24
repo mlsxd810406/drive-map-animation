@@ -1,6 +1,6 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=202610242329"><script src="lib/leaflet.js?v=202610242329"></script><script src="lib/exifr.umd.js?v=202610242329"></script><script src="lib/gcj.js?v=202610242329"></script><script src="lib/gcjlabels.js?v=202610242329"></script><script src="lib/admin.js?v=202610242329"></script><script src="lib/qsmart.js?v=202610242329"></script><script src="lib/addr.js?v=202610242329"></script><script src="lib/basemap.js?v=202610242329"></script>
+<link rel="stylesheet" href="lib/leaflet.css"><script src="lib/leaflet.js"></script><script src="lib/exifr.umd.js"></script><script src="lib/gcj.js"></script><script src="lib/gcjlabels.js"></script><script src="lib/admin.js"></script><script src="lib/qsmart.js"></script><script src="lib/addr.js"></script><script src="lib/basemap.js"></script>
 <script src="cache.js"></script><script src="regions.js"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
@@ -380,7 +380,8 @@ body.mob .nd-ph,body.mob .nd-bd{pointer-events:auto!important}body.mob .nepb{hei
 #ned .necol{display:flex;align-items:center;gap:6px}#ne_iname{font-size:13px;color:#5a544c;min-width:2.6em}#ne_sw{display:flex;gap:6px;flex:1;justify-content:flex-end}#ne_sw b{width:26px;height:26px;border-radius:13px;cursor:pointer;box-shadow:inset 0 0 0 2px rgba(255,255,255,.9);position:relative}#ne_sw b::after{content:'';position:absolute;inset:-7px}#ne_sw b.sel{outline:2px solid #2b2620;outline-offset:2px}
 #ned .necc{width:26px;height:26px;border-radius:13px;overflow:hidden;background:conic-gradient(red,#ff0,lime,cyan,blue,#f0f,red);position:relative;flex:none;cursor:pointer}#ned .necc input{position:absolute;inset:0;opacity:0;width:100%;height:100%;min-height:0!important;padding:0;border:0}
 body.mob #ned{background:#fbf9f5!important;-webkit-backdrop-filter:none!important;backdrop-filter:none!important;z-index:1750!important;max-height:none!important;overflow:visible!important;padding:12px 14px calc(12px + env(safe-area-inset-bottom))!important;transition:bottom .15s}body.mob #ned .mcam{display:inline-flex!important}body.mob #ned input#ne_title,body.mob #ned input#ne_note,body.mob #ned .nestep input{font-size:16px!important}
-</style></head><body>
+</style><style>@media (min-width:641px) and (min-height:501px){#tog>svg{display:none}#sumtxt{display:none}}</style>
+</head><body>
 <div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index3d.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>切换3D</span></a></div>
 <div id="legend"><span><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span><i style="background:#d50000"></i>已行驶</span><span><b style="background:#43a047"></b>可加油</span><span><b style="background:#ff9800"></b>服务区</span></div>
@@ -961,6 +962,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/qr.js?v=202610242329"></script><script src="lib/extras.js?v=202610242329"></script><script src="lib/imp.js?v=202610242329"></script>
-<script src="lib/mlay.js?v=202610242329"></script>
+<script src="lib/qr.js"></script><script src="lib/extras.js"></script><script src="lib/imp.js"></script>
+<script src="lib/mlay.js"></script>
 </body></html>
