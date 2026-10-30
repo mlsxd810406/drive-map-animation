@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画 · 3D</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css?v=v202610301418"><script src="lib/leaflet.js?v=v202610301418"></script><link rel="stylesheet" href="lib/maplibre-gl.css?v=v202610301418"><script src="lib/maplibre-gl.js?v=v202610301418"></script><script src="lib/exifr.umd.js?v=v202610301418"></script><script src="lib/gcj.js?v=v202610301418"></script><script src="lib/gcjlabels.js?v=v202610301418"></script><script src="lib/admin.js?v=v202610301418"></script><script src="lib/qsmart.js?v=v202610301418"></script><script src="lib/addr.js?v=v202610301418"></script><script src="lib/basemap.js?v=v202610301418"></script>
-<script src="cache.js?v=v202610301418"></script><script src="regions.js"></script><script src="lib/rail.js?v=v202610301418"></script>
+<link rel="stylesheet" href="lib/leaflet.css"><script src="lib/leaflet.js"></script><link rel="stylesheet" href="lib/maplibre-gl.css"><script src="lib/maplibre-gl.js"></script><script src="lib/exifr.umd.js"></script><script src="lib/gcj.js"></script><script src="lib/gcjlabels.js"></script><script src="lib/admin.js"></script><script src="lib/qsmart.js"></script><script src="lib/addr.js"></script><script src="lib/basemap.js"></script>
+<script src="cache.js?v=v202610301429"></script><script src="regions.js"></script><script src="lib/rail.js?v=v202610301429"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
 #map{position:absolute;inset:0}
@@ -386,7 +386,7 @@ body.mob #ned{background:#fbf9f5!important;-webkit-backdrop-filter:none!importan
 </head><body>
 <div id="xfade"></div><div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M9 4L3 6.5v13.5l6-2.5 6 2.5 6-2.5V4l-6 2.5z"/><path d="M9 4v13.5M15 6.5V20"/></svg><span>切换2D</span></a></div>
-<div id="legend"><span data-leg="hw"><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span data-leg="rd"><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span data-leg="rail" style="display:none"><i style="background:#7c4dff;box-shadow:0 0 0 1px #1a237e"></i>铁路</span><span><i style="background:#d50000"></i>已行驶</span><span data-leg="fuel"><b style="background:#43a047"></b>可加油</span><span data-leg="svc"><b style="background:#ff9800"></b>服务区</span></div>
+<div id="legend"><span data-leg="hw"><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span data-leg="rd"><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span data-leg="rail" style="display:none"><i style="background:linear-gradient(90deg,#cfd8dc 0 22%,#5d4037 22% 78%,#cfd8dc 78%);box-shadow:0 0 0 1px #3e2723"></i>铁路</span><span><i style="background:#d50000"></i>已行驶</span><span data-leg="fuel"><b style="background:#43a047"></b>可加油</span><span data-leg="svc"><b style="background:#ff9800"></b>服务区</span></div>
 <div id="ctl" class="pa">
 <div class="grab" id="grab"><i></i></div><div class="pa-hd"><button class="mplay" id="mplay" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><h1 id="paTitle">自驾路线</h1><span id="psum" class="num"></span></div>
 <div class="pa-sec" id="modesec"><div class="pa-sh"><span>出行</span></div><div class="chips" id="modesel"><span data-mode="drive" class="on">自驾</span><span data-mode="train">火车</span></div><div class="hint" id="modehint" style="display:none;margin-top:6px">试点：京沪 / 京广 / 沪杭高铁沿线站点附近</div></div>
@@ -486,17 +486,22 @@ function carLen(){const lat=carLL?carLL[0]:40,z=map.getZoom(),fb=36*156543*Math.
 function updateCar(lat,lon){carLL=[lat,lon];const L_=carLen()*VEH().len,h=heading*Math.PI/180,sh=Math.sin(h),ch=Math.cos(h),k=111320,kc=k*Math.cos(lat*Math.PI/180);
  const P=(f,r)=>[lon+(f*sh+r*ch)*L_/kc,lat+(f*ch-r*sh)*L_/k];
  let elev=0;try{const e=map.queryTerrainElevation({lng:lon,lat:lat},{exaggerated:true});if(e!=null&&isFinite(e)&&e>-50&&e<9000)elev=e;}catch(_){}
- const lift=Math.max(0,elev)+0.6;
- // 近景：挤出车身；远景挤出会糊成白斑 → 清空挤出，改靠 Marker 清晰图标
- const z=map.getZoom();
- if(z>=12.2){GJ('car',{type:'FeatureCollection',features:VEH().parts.map(([f1,f2,w,b,t,c,o=0])=>({type:'Feature',properties:{c,b:lift+b*L_,h:lift+t*L_},geometry:{type:'Polygon',coordinates:[[P(f1,o-w),P(f1,o+w),P(f2,o+w),P(f2,o-w),P(f1,o-w)]]}}))});}
+ const isTrain=travelMode==='train';
+ const lift=Math.max(0,elev)+(isTrain?1.05:0.6);
+ // 近景：挤出车身；火车阈值略低，更早看见立体车厢
+ const z=map.getZoom(),zCut=isTrain?10.6:12.2;
+ if(z>=zCut){GJ('car',{type:'FeatureCollection',features:VEH().parts.map(([f1,f2,w,b,t,c,o=0])=>({type:'Feature',properties:{c,b:lift+b*L_,h:lift+t*L_},geometry:{type:'Polygon',coordinates:[[P(f1,o-w),P(f1,o+w),P(f2,o+w),P(f2,o-w),P(f1,o-w)]]}}))});}
  else GJ('car',EMPTY);
- // 始终用 SVG Marker 保证能看见所选车型（含重型卡车）
- if(!window.__carMk){const el=document.createElement('div');el.className='carw';el.style.cssText='width:72px;height:72px;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.65));transform-origin:center center;';el.innerHTML=CAR_SVG;
-  window.__carMk=new maplibregl.Marker({element:el,rotationAlignment:'viewport',pitchAlignment:'viewport'}).setLngLat([lon,lat]).addTo(map);carEl=el;}
+ // 火车：贴地图平面（map）更像趴在轨道上；自驾保持视口广告牌
+ const wantMap=isTrain;
+ const px=typeof vehPx==='function'?vehPx():72;
+ if(!window.__carMk||window.__carMkAlign!==wantMap){if(window.__carMk)try{window.__carMk.remove();}catch(_){}
+  const el=document.createElement('div');el.className='carw';el.style.cssText='width:'+px+'px;height:'+px+'px;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.65));transform-origin:center center;';el.innerHTML=CAR_SVG;el.dataset.veh=VEH_I;
+  const al=wantMap?'map':'viewport';
+  window.__carMk=new maplibregl.Marker({element:el,rotationAlignment:al,pitchAlignment:al}).setLngLat([lon,lat]).addTo(map);window.__carMkAlign=wantMap;carEl=el;}
  else{window.__carMk.setLngLat([lon,lat]);}
- try{window.__carMk.setRotation(heading-map.getBearing());}catch(_){}
- if(carEl&&String(carEl.dataset.veh)!==String(VEH_I)){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}
+ try{window.__carMk.setRotation(wantMap?heading:(heading-map.getBearing()));}catch(_){}
+ if(carEl){if(String(carEl.dataset.veh)!==String(VEH_I)){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}carEl.style.width=px+'px';carEl.style.height=px+'px';}
 }
 const car={setLatLng:p=>updateCar(p[0],p[1]),getLatLng:()=>({lat:carLL[0],lng:carLL[1]})};
 let camBear=0,camInit=false,camZ=11,camZv=0;
@@ -554,18 +559,19 @@ const VEHS=[
  {n:'中巴 · 丰田考斯特',len:1.45,parts:[[0.38,0.27,0.15,0,0.08,'#111'],[-0.26,-0.37,0.15,0,0.08,'#111'],[0.5,-0.5,0.145,0.03,0.3,'#f3efe6'],[0.49,-0.49,0.148,0.11,0.15,'#5f8f7a'],[0.46,-0.42,0.149,0.18,0.28,'#33414d'],[0.5,0.45,0.13,0.17,0.29,'#33414d'],[0.43,-0.48,0.125,0.3,0.33,'#e4dfd3'],[0.1,-0.05,0.07,0.33,0.36,'#cfc9bc'],...LT(0,0.1),...TL(0.1)]},
  {n:'重型卡车 · 奔驰',len:1.6,parts:[[0.45,0.39,0.1,0,0.06,'#111'],[0.14,0.04,0.1,0,0.06,'#111'],[-0.3,-0.46,0.1,0,0.06,'#111'],[0.5,0.33,0.09,0.03,0.25,'#2f5d8a'],[0.5,0.46,0.086,0.14,0.22,'#1f2a33'],[0.44,0.35,0.085,0.25,0.29,'#2f5d8a'],[0.31,-0.5,0.096,0.06,0.28,'#8a9aab'],[0.3,-0.49,0.08,0.28,0.285,'#6d7f90'],...LT(0,0.06),...TL(0.07,-0.495)]},
  {n:'摩托车 · 本田',len:0.62,parts:[[0.5,0.2,0.035,0,0.3,'#111'],[-0.2,-0.5,0.04,0,0.3,'#111'],[0.28,-0.3,0.085,0.18,0.3,'#c62828'],[0.24,0.2,0.21,0.32,0.36,'#555'],[0.02,-0.32,0.075,0.3,0.34,'#222'],[0.08,-0.22,0.14,0.34,0.62,'#3b3f46'],[0.14,-0.02,0.075,0.62,0.75,'#f5f5f5'],[0.53,0.5,0.035,0.24,0.29,'#fff59d'],[-0.5,-0.53,0.035,0.22,0.27,'#ff1744']]},
- {n:'复兴号高铁',len:1.85,parts:[[0.44,0.34,0.11,0,0.07,'#222'],[0.12,0.02,0.11,0,0.07,'#222'],[-0.26,-0.4,0.11,0,0.07,'#222'],[0.5,-0.5,0.135,0.04,0.2,'#eceff1'],[0.5,0.36,0.135,0.04,0.2,'#1565c0'],[0.34,-0.34,0.11,0.12,0.19,'#1c313a'],[0.08,-0.08,0.11,0.12,0.19,'#1c313a'],[-0.18,-0.34,0.11,0.12,0.19,'#1c313a'],[0.5,0.45,0.12,0.1,0.16,'#fff59d'],[-0.48,-0.5,0.09,0.08,0.14,'#ff1744'],[0.02,-0.02,0.02,0.2,0.3,'#546e7a']]}];
+ {n:'复兴号高铁',len:2.85,parts:[[0.40,0.28,0.105,0,0.055,'#1a1a1a'],[0.10,-0.02,0.105,0,0.055,'#1a1a1a'],[-0.18,-0.30,0.105,0,0.055,'#1a1a1a'],[-0.38,-0.48,0.10,0,0.055,'#1a1a1a'],[0.48,-0.50,0.125,0.02,0.07,'#37474f'],[0.50,0.44,0.055,0.06,0.19,'#eceff1'],[0.46,0.34,0.095,0.055,0.205,'#f5f5f5'],[0.38,0.22,0.125,0.05,0.215,'#fafafa'],[0.28,-0.50,0.145,0.05,0.22,'#fafafa'],[0.49,0.40,0.06,0.105,0.145,'#1565c0'],[0.42,0.26,0.11,0.10,0.15,'#0d47a5'],[0.28,-0.50,0.148,0.105,0.145,'#1565c0'],[0.36,0.26,0.09,0.145,0.205,'#0d47a5'],[0.18,0.08,0.112,0.145,0.205,'#1a237e'],[0.02,-0.08,0.112,0.145,0.205,'#1a237e'],[-0.14,-0.24,0.112,0.145,0.205,'#1a237e'],[-0.30,-0.42,0.112,0.145,0.205,'#1a237e'],[0.26,-0.46,0.11,0.215,0.235,'#90a4ae'],[0.08,-0.02,0.04,0.23,0.30,'#546e7a'],[0.505,0.485,0.035,0.10,0.155,'#fff59d',0.055],[0.505,0.485,0.035,0.10,0.155,'#fff59d',-0.055],[-0.485,-0.505,0.03,0.10,0.145,'#ff1744',0.10],[-0.485,-0.505,0.03,0.10,0.145,'#ff1744',-0.10]]}];
 const TRAIN_I=VEHS.length-1;const DRIVE_VEH_N=TRAIN_I;
 let travelMode='drive';let driveVehI=0;
 let VEH_I=(()=>{try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');if(r&&r.mode==='train'){travelMode='train';}if(r&&r.veh!=null&&Date.now()-r.t<6e5&&VEHS[r.veh]&&r.veh<DRIVE_VEH_N){driveVehI=r.veh;return travelMode==='train'?TRAIN_I:r.veh;}}catch(e){}driveVehI=Math.floor(Math.random()*DRIVE_VEH_N);return travelMode==='train'?TRAIN_I:driveVehI;})();
 const VEH=()=>VEHS[VEH_I];
-function vehSvg(v){const S=60,c=S/2,Lp=34*v.len,ps=v.parts.slice().sort((a,b)=>a[4]-b[4]);let o='<svg viewBox="0 0 '+S+' '+S+'" width="'+S+'" height="'+S+'"><ellipse cx="'+c+'" cy="'+(c+1)+'" rx="'+(Math.max(...v.parts.map(p=>p[2]))*Lp+2).toFixed(1)+'" ry="'+(Lp/2+2).toFixed(1)+'" fill="rgba(0,0,0,.35)"/>';
+function vehSvg(v){const Lp=34*v.len,S=Math.max(64,Math.ceil(Lp+20)),c=S/2,disp=Math.round(Math.min(110,Math.max(56,40*v.len))),ps=v.parts.slice().sort((a,b)=>a[4]-b[4]);let o='<svg viewBox="0 0 '+S+' '+S+'" width="'+disp+'" height="'+disp+'"><ellipse cx="'+c+'" cy="'+(c+1)+'" rx="'+(Math.max(...v.parts.map(p=>p[2]))*Lp+2).toFixed(1)+'" ry="'+(Lp/2+2).toFixed(1)+'" fill="rgba(0,0,0,.35)"/>';
  for(const [f1,f2,w,b,t,col,off=0] of ps){const x=c+(off-w)*Lp,y=c-f1*Lp,W=2*w*Lp,H=(f1-f2)*Lp,r=Math.min(W,H)*0.28;o+='<rect x="'+x.toFixed(2)+'" y="'+y.toFixed(2)+'" width="'+W.toFixed(2)+'" height="'+H.toFixed(2)+'" rx="'+r.toFixed(2)+'" fill="'+col+'"'+(t>=0.15&&W>4?' stroke="rgba(255,255,255,.55)" stroke-width=".6"':'')+'/>';}
  return o+'</svg>';}
+function vehPx(v){return Math.round(Math.min(110,Math.max(56,40*(v||VEH()).len)));}
 let CAR_SVG=vehSvg(VEH());
 function setVeh(i){VEH_I=+i;if(VEH_I<DRIVE_VEH_N)driveVehI=VEH_I;CAR_SVG=vehSvg(VEH());const sel=document.getElementById('vehsel');if(sel&&VEH_I<DRIVE_VEH_N)sel.value=VEH_I;
- if(typeof car!=='undefined'&&car&&car.setIcon){car.setIcon(L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}));carEl=car.getElement().firstChild;carEl.style.transform='rotate('+heading+'deg)';}
- else if(typeof carLL!=='undefined'&&carLL){if(window.__carMk&&carEl){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}updateCar(carLL[0],carLL[1]);}}
+ const px=vehPx();if(typeof car!=='undefined'&&car&&car.setIcon){car.setIcon(L.divIcon({className:'',html:'<div class="carw" style="width:'+px+'px;height:'+px+'px">'+CAR_SVG+'</div>',iconSize:[px,px],iconAnchor:[px/2,px/2]}));carEl=car.getElement().firstChild;carEl.style.transform='rotate('+heading+'deg)';}
+ else if(typeof carLL!=='undefined'&&carLL){if(window.__carMk&&carEl){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;carEl.style.width=px+'px';carEl.style.height=px+'px';}updateCar(carLL[0],carLL[1]);}}
 function refreshModeUI(){const train=travelMode==='train';
  document.querySelectorAll('#modesel span').forEach(e=>e.classList.toggle('on',e.dataset.mode===travelMode));
  if($('paTitle'))$('paTitle').textContent=train?'火车路线':'自驾路线';
@@ -581,12 +587,30 @@ function setTravelMode(m,opts){const o=opts||{};if(m!=='drive'&&m!=='train')retu
  refreshModeUI();
  if(!o.silent&&prev!==m){if(coords.length){msg(m==='train'?'已切换火车模式，请重新规划路线':'已切换自驾模式，请重新规划路线');}
   else msg(m==='train'?'火车试点：京沪/京广/沪杭沿线':'自驾模式：OSRM 公路规划');}}
+function railOffset(c,meters){const out=[];for(let i=0;i<c.length;i++){const a=c[Math.max(0,i-1)],b=c[Math.min(c.length-1,i+1)],lat=c[i][0],lon=c[i][1];
+  const dy=b[0]-a[0],dx=(b[1]-a[1])*Math.cos(lat*Math.PI/180),len=Math.hypot(dx,dy)||1,nx=-dy/len,ny=dx/len,k=111320,kc=k*Math.cos(lat*Math.PI/180);
+  out.push([lat+nx*meters/k,lon+ny*meters/kc]);}return out;}
 function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push(cum[i-1]+hav(c[i-1],c[i]));total=cum[cum.length-1];duration=dur;
  segs=sg&&sg.length?sg:[{i0:0,i1:c.length-1,name:'',ref:''}];buildRuns();
  [miniRoute].forEach(l=>l&&l.remove());
  const ML=a=>{const lines=a.filter(p=>p&&p.length>=2).map(p=>p.map(q=>[q[1],q[0]]));return {type:'FeatureCollection',features:lines.length?[{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:lines}}]:[]};};
- if(travelMode==='train'){try{map.setPaintProperty('hw','line-color','#7c4dff');map.setPaintProperty('hw-c','line-color','#1a237e');}catch(_){}GJ('hw',ML([c]));GJ('rd',ML([]));}
- else{try{map.setPaintProperty('hw','line-color','#ff9800');map.setPaintProperty('hw-c','line-color','#3e2723');}catch(_){}
+ if(travelMode==='train'){try{
+  map.setPaintProperty('hw-c','line-color','#4e342e');map.setPaintProperty('hw-c','line-width',['interpolate',['linear'],['zoom'],5,11,12,24]);
+  map.setPaintProperty('hw','line-color','#6d4c41');map.setPaintProperty('hw','line-width',['interpolate',['linear'],['zoom'],5,5,12,11]);map.setPaintProperty('hw','line-dasharray',[0.35,1.5]);
+  map.setPaintProperty('rd-c','line-color','#90a4ae');map.setPaintProperty('rd-c','line-width',['interpolate',['linear'],['zoom'],5,1.4,12,3.2]);
+  map.setPaintProperty('rd','line-color','#eceff1');map.setPaintProperty('rd','line-width',['interpolate',['linear'],['zoom'],5,1.1,12,2.4]);
+  try{map.removePaintProperty('rd','line-dasharray');}catch(_){}
+ }catch(_){}
+  GJ('hw',ML([c]));GJ('rd',ML([railOffset(c,-5),railOffset(c,5)]));}
+ else{try{
+  map.setPaintProperty('hw','line-color','#ff9800');map.setPaintProperty('hw-c','line-color','#3e2723');
+  map.setPaintProperty('hw-c','line-width',['interpolate',['linear'],['zoom'],5,6,12,13]);
+  map.setPaintProperty('hw','line-width',['interpolate',['linear'],['zoom'],5,3.5,12,8]);
+  try{map.removePaintProperty('hw','line-dasharray');}catch(_){}
+  map.setPaintProperty('rd-c','line-color','#002b36');map.setPaintProperty('rd','line-color','#00e5ff');
+  map.setPaintProperty('rd-c','line-width',['interpolate',['linear'],['zoom'],5,5,12,10]);
+  map.setPaintProperty('rd','line-width',['interpolate',['linear'],['zoom'],5,2.8,12,6]);
+ }catch(_){}
   const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}GJ('hw',ML(hwC));GJ('rd',ML(rdC));}
  doneLayer={setLatLngs:a=>{const st=Math.max(1,Math.floor(a.length/1500)),o=[];for(let i=0;i<a.length-1;i+=st)o.push([a[i][1],a[i][0]]);const l=a[a.length-1];if(l)o.push([l[1],l[0]]);GJ('done',{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:o.length>1?o:[[0,0],[0,0]]}});}};
  miniRoute=L.polyline(c,{color:'#ff1744',weight:2}).addTo(mini);mini.fitBounds(miniRoute.getBounds(),{padding:[8,8]});
@@ -1089,6 +1113,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/qr.js?v=v202610301418"></script><script src="lib/extras.js?v=v202610301418"></script><script src="lib/cine.js?v=v202610301418"></script><script src="lib/bgm.js?v=v202610301418"></script><script src="lib/msheet.js?v=v202610301418"></script><script src="lib/imp.js?v=v202610301418"></script><script src="lib/fav.js?v=v202610301418"></script>
-<script src="lib/mlay.js?v=v202610301418"></script>
+<script src="lib/qr.js"></script><script src="lib/extras.js?v=v202610301429"></script><script src="lib/cine.js?v=v202610301429"></script><script src="lib/bgm.js?v=v202610301429"></script><script src="lib/msheet.js"></script><script src="lib/imp.js"></script><script src="lib/fav.js"></script>
+<script src="lib/mlay.js"></script>
 </body></html>

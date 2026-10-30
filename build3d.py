@@ -76,35 +76,60 @@ function carLen(){const lat=carLL?carLL[0]:40,z=map.getZoom(),fb=36*156543*Math.
 function updateCar(lat,lon){carLL=[lat,lon];const L_=carLen()*VEH().len,h=heading*Math.PI/180,sh=Math.sin(h),ch=Math.cos(h),k=111320,kc=k*Math.cos(lat*Math.PI/180);
  const P=(f,r)=>[lon+(f*sh+r*ch)*L_/kc,lat+(f*ch-r*sh)*L_/k];
  let elev=0;try{const e=map.queryTerrainElevation({lng:lon,lat:lat},{exaggerated:true});if(e!=null&&isFinite(e)&&e>-50&&e<9000)elev=e;}catch(_){}
- const lift=Math.max(0,elev)+0.6;
- // 近景：挤出车身；远景挤出会糊成白斑 → 清空挤出，改靠 Marker 清晰图标
- const z=map.getZoom();
- if(z>=12.2){GJ('car',{type:'FeatureCollection',features:VEH().parts.map(([f1,f2,w,b,t,c,o=0])=>({type:'Feature',properties:{c,b:lift+b*L_,h:lift+t*L_},geometry:{type:'Polygon',coordinates:[[P(f1,o-w),P(f1,o+w),P(f2,o+w),P(f2,o-w),P(f1,o-w)]]}}))});}
+ const isTrain=travelMode==='train';
+ const lift=Math.max(0,elev)+(isTrain?1.05:0.6);
+ // 近景：挤出车身；火车阈值略低，更早看见立体车厢
+ const z=map.getZoom(),zCut=isTrain?10.6:12.2;
+ if(z>=zCut){GJ('car',{type:'FeatureCollection',features:VEH().parts.map(([f1,f2,w,b,t,c,o=0])=>({type:'Feature',properties:{c,b:lift+b*L_,h:lift+t*L_},geometry:{type:'Polygon',coordinates:[[P(f1,o-w),P(f1,o+w),P(f2,o+w),P(f2,o-w),P(f1,o-w)]]}}))});}
  else GJ('car',EMPTY);
- // 始终用 SVG Marker 保证能看见所选车型（含重型卡车）
- if(!window.__carMk){const el=document.createElement('div');el.className='carw';el.style.cssText='width:72px;height:72px;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.65));transform-origin:center center;';el.innerHTML=CAR_SVG;
-  window.__carMk=new maplibregl.Marker({element:el,rotationAlignment:'viewport',pitchAlignment:'viewport'}).setLngLat([lon,lat]).addTo(map);carEl=el;}
+ // 火车：贴地图平面（map）更像趴在轨道上；自驾保持视口广告牌
+ const wantMap=isTrain;
+ const px=typeof vehPx==='function'?vehPx():72;
+ if(!window.__carMk||window.__carMkAlign!==wantMap){if(window.__carMk)try{window.__carMk.remove();}catch(_){}
+  const el=document.createElement('div');el.className='carw';el.style.cssText='width:'+px+'px;height:'+px+'px;pointer-events:none;filter:drop-shadow(0 3px 4px rgba(0,0,0,.65));transform-origin:center center;';el.innerHTML=CAR_SVG;el.dataset.veh=VEH_I;
+  const al=wantMap?'map':'viewport';
+  window.__carMk=new maplibregl.Marker({element:el,rotationAlignment:al,pitchAlignment:al}).setLngLat([lon,lat]).addTo(map);window.__carMkAlign=wantMap;carEl=el;}
  else{window.__carMk.setLngLat([lon,lat]);}
- try{window.__carMk.setRotation(heading-map.getBearing());}catch(_){}
- if(carEl&&String(carEl.dataset.veh)!==String(VEH_I)){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}
+ try{window.__carMk.setRotation(wantMap?heading:(heading-map.getBearing()));}catch(_){}
+ if(carEl){if(String(carEl.dataset.veh)!==String(VEH_I)){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}carEl.style.width=px+'px';carEl.style.height=px+'px';}
 }
 const car={setLatLng:p=>updateCar(p[0],p[1]),getLatLng:()=>({lat:carLL[0],lng:carLL[1]})};
 let camBear=0,camInit=false,camZ=11,camZv=0;\nconst camBase=()=>14.6-6.6*(+$('dist').value/100);\nfunction camPad(){const H=innerHeight,W=innerWidth,vis=e=>e&&getComputedStyle(e).display!=='none'&&!e.classList.contains('hide');const c=$('ctl'),pr=$('prof');const mob=MOB();const rb=(mob?(window.__mobTop!=null?window.__mobTop+46-8:c.getBoundingClientRect().top):(vis(pr)?pr.getBoundingClientRect().top:H))-46,rt=mob?(window.__mobTopT||$('stat').getBoundingClientRect().bottom)+12:60,R=Math.max(100,rb-rt);const l=!mob&&vis(c)&&!document.body.classList.contains('rec')?c.getBoundingClientRect().right+10:0;return {top:Math.round(rt+0.2*R),bottom:Math.round(H-rb),left:Math.round(Math.min(l,W*0.5)),right:0};}\nwindow.__cam={};window.__lastBase=null;addEventListener('resize',()=>{if(!playing&&camInit)map.easeTo({padding:camPad(),duration:300});});\nfunction hAt(d){const A=pointAt(d-0.15),B=pointAt(d+0.6);return Math.atan2((B[1]-A[1])*Math.cos(A[0]*Math.PI/180),B[0]-A[0])*180/Math.PI;}""")
 R(",routeG=L.layerGroup().addTo(map),doneLayer,car,carEl,",",doneLayer,carEl={style:{}},")
 R(",svcLayer=L.layerGroup().addTo(map),",",")
 R("""routeG.clearLayers();[doneLayer,miniRoute].forEach(l=>l&&l.remove());""","""[miniRoute].forEach(l=>l&&l.remove());""")
-R(""" if(travelMode==='train'){L.polyline(c,{color:'#1a237e',weight:10,opacity:.9}).addTo(routeG);L.polyline(c,{color:'#7c4dff',weight:6}).addTo(routeG);}
+R(""" if(travelMode==='train'){const Lr=railOffset(c,-5),Rr=railOffset(c,5);
+  L.polyline(c,{color:'#4e342e',weight:16,opacity:.92}).addTo(routeG);
+  L.polyline(c,{color:'#546e7a',weight:9,opacity:.9}).addTo(routeG);
+  L.polyline(c,{color:'#6d4c41',weight:7,opacity:.8,dashArray:'2 11'}).addTo(routeG);
+  L.polyline(Lr,{color:'#cfd8dc',weight:2.4,opacity:.98}).addTo(routeG);
+  L.polyline(Rr,{color:'#cfd8dc',weight:2.4,opacity:.98}).addTo(routeG);}
  else{const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}
  L.polyline(hwC,{color:'#3e2723',weight:10,opacity:.9}).addTo(routeG);L.polyline(hwC,{color:'#ff9800',weight:6}).addTo(routeG);
  L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);}
  doneLayer=L.polyline([],{color:'#d50000',weight:3.5}).addTo(map);""",
 """ const ML=a=>{const lines=a.filter(p=>p&&p.length>=2).map(p=>p.map(q=>[q[1],q[0]]));return {type:'FeatureCollection',features:lines.length?[{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:lines}}]:[]};};
- if(travelMode==='train'){try{map.setPaintProperty('hw','line-color','#7c4dff');map.setPaintProperty('hw-c','line-color','#1a237e');}catch(_){}GJ('hw',ML([c]));GJ('rd',ML([]));}
- else{try{map.setPaintProperty('hw','line-color','#ff9800');map.setPaintProperty('hw-c','line-color','#3e2723');}catch(_){}
+ if(travelMode==='train'){try{
+  map.setPaintProperty('hw-c','line-color','#4e342e');map.setPaintProperty('hw-c','line-width',['interpolate',['linear'],['zoom'],5,11,12,24]);
+  map.setPaintProperty('hw','line-color','#6d4c41');map.setPaintProperty('hw','line-width',['interpolate',['linear'],['zoom'],5,5,12,11]);map.setPaintProperty('hw','line-dasharray',[0.35,1.5]);
+  map.setPaintProperty('rd-c','line-color','#90a4ae');map.setPaintProperty('rd-c','line-width',['interpolate',['linear'],['zoom'],5,1.4,12,3.2]);
+  map.setPaintProperty('rd','line-color','#eceff1');map.setPaintProperty('rd','line-width',['interpolate',['linear'],['zoom'],5,1.1,12,2.4]);
+  try{map.removePaintProperty('rd','line-dasharray');}catch(_){}
+ }catch(_){}
+  GJ('hw',ML([c]));GJ('rd',ML([railOffset(c,-5),railOffset(c,5)]));}
+ else{try{
+  map.setPaintProperty('hw','line-color','#ff9800');map.setPaintProperty('hw-c','line-color','#3e2723');
+  map.setPaintProperty('hw-c','line-width',['interpolate',['linear'],['zoom'],5,6,12,13]);
+  map.setPaintProperty('hw','line-width',['interpolate',['linear'],['zoom'],5,3.5,12,8]);
+  try{map.removePaintProperty('hw','line-dasharray');}catch(_){}
+  map.setPaintProperty('rd-c','line-color','#002b36');map.setPaintProperty('rd','line-color','#00e5ff');
+  map.setPaintProperty('rd-c','line-width',['interpolate',['linear'],['zoom'],5,5,12,10]);
+  map.setPaintProperty('rd','line-width',['interpolate',['linear'],['zoom'],5,2.8,12,6]);
+ }catch(_){}
   const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}GJ('hw',ML(hwC));GJ('rd',ML(rdC));}
  doneLayer={setLatLngs:a=>{const st=Math.max(1,Math.floor(a.length/1500)),o=[];for(let i=0;i<a.length-1;i+=st)o.push([a[i][1],a[i][0]]);const l=a[a.length-1];if(l)o.push([l[1],l[0]]);GJ('done',{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:o.length>1?o:[[0,0],[0,0]]}});}};""")
 R("if(!window.__restoring)map.fitBounds(L.latLngBounds(c),MOB()?(P=>({paddingTopLeft:[P.l,P.t],paddingBottomRight:[P.r,P.b]}))(__mpad()):{paddingTopLeft:[$(\'ctl\').classList.contains(\'hide\')?40:$(\'ctl\').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});","{if(!window.__restoring){let b=new maplibregl.LngLatBounds();c.forEach(q=>b.extend([q[1],q[0]]));map.fitBounds(b,{padding:{top:70,bottom:170,right:60,left:MOB()?24:$(\'ctl\').classList.contains(\'hide\')?50:$(\'ctl\').getBoundingClientRect().right+30,...(MOB()?(P=>({top:P.t,bottom:P.b,left:P.l,right:P.r}))(__mpad()):{})},pitch:45,bearing:0,duration:0});camInit=false;}}")
-R(""" if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
+R(""" if(!car){const px=vehPx();car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw" style="width:'+px+'px;height:'+px+'px">'+CAR_SVG+'</div>',iconSize:[px,px],iconAnchor:[px/2,px/2]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
 ""","")
 # 服务区标记
 R("svcLayer.clearLayers();","svcMk.forEach(m=>m.remove());svcMk=[];",2)
