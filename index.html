@@ -1,7 +1,7 @@
 <!DOCTYPE html><html lang="zh-CN"><head><meta charset="utf-8"><title>自驾行进动画</title>
 <meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover"><meta name="apple-mobile-web-app-capable" content="yes"><meta name="theme-color" content="#f6f3ee">
-<link rel="stylesheet" href="lib/leaflet.css"><script src="lib/leaflet.js"></script><script src="lib/exifr.umd.js"></script><script src="lib/gcj.js"></script><script src="lib/gcjlabels.js"></script><script src="lib/admin.js"></script><script src="lib/qsmart.js"></script><script src="lib/addr.js"></script><script src="lib/basemap.js"></script>
-<script src="cache.js?v=v202610301349"></script><script src="regions.js"></script>
+<link rel="stylesheet" href="lib/leaflet.css?v=v202610301418"><script src="lib/leaflet.js?v=v202610301418"></script><script src="lib/exifr.umd.js?v=v202610301418"></script><script src="lib/gcj.js?v=v202610301418"></script><script src="lib/gcjlabels.js?v=v202610301418"></script><script src="lib/admin.js?v=v202610301418"></script><script src="lib/qsmart.js?v=v202610301418"></script><script src="lib/addr.js?v=v202610301418"></script><script src="lib/basemap.js?v=v202610301418"></script>
+<script src="cache.js?v=v202610301418"></script><script src="regions.js"></script><script src="lib/rail.js?v=v202610301418"></script>
 <style>
 html,body{margin:0;height:100%;font-family:"Microsoft YaHei","PingFang SC","Noto Sans CJK SC",sans-serif;overflow:hidden}
 #map{position:absolute;inset:0}
@@ -386,9 +386,10 @@ body.mob #ned{background:#fbf9f5!important;-webkit-backdrop-filter:none!importan
 </head><body>
 <div id="xfade"></div><div id="map"></div><canvas id="fx"></canvas>
 <div id="bar"><button id="bplay" class="mo" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="bprof" class="mo" title="海拔剖面"><svg class="i" viewBox="0 0 24 24"><path d="M3 19l5-8 4 5 3-4 6 7z"/></svg></button><button id="bmini" class="mo" title="小地图"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><path d="M7 15l4-5 3 3 3-4"/></svg></button><button id="tog" title="隐藏/显示设置"><svg class="i" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="3"/><path d="M9 4v16"/></svg><span>隐藏设置</span></button><button id="mute" title="声音"><svg class="i" viewBox="0 0 24 24"><path d="M4 9v6h4l5 4V5L8 9z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg><span>声音开</span></button><a id="sw" href="index3d.html" onclick="this.href='index3d.html'+location.search" title="切换视图"><svg class="i" viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg><span>切换3D</span></a></div>
-<div id="legend"><span><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span><i style="background:#d50000"></i>已行驶</span><span><b style="background:#43a047"></b>可加油</span><span><b style="background:#ff9800"></b>服务区</span></div>
+<div id="legend"><span data-leg="hw"><i style="background:#ff9800;box-shadow:0 0 0 1px #3e2723"></i>高速</span><span data-leg="rd"><i style="background:#00e5ff;box-shadow:0 0 0 1px #002b36"></i>普通道路</span><span data-leg="rail" style="display:none"><i style="background:#7c4dff;box-shadow:0 0 0 1px #1a237e"></i>铁路</span><span><i style="background:#d50000"></i>已行驶</span><span data-leg="fuel"><b style="background:#43a047"></b>可加油</span><span data-leg="svc"><b style="background:#ff9800"></b>服务区</span></div>
 <div id="ctl" class="pa">
-<div class="grab" id="grab"><i></i></div><div class="pa-hd"><button class="mplay" id="mplay" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><h1>自驾路线</h1><span id="psum" class="num"></span></div>
+<div class="grab" id="grab"><i></i></div><div class="pa-hd"><button class="mplay" id="mplay" title="播放/暂停"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><h1 id="paTitle">自驾路线</h1><span id="psum" class="num"></span></div>
+<div class="pa-sec" id="modesec"><div class="pa-sh"><span>出行</span></div><div class="chips" id="modesel"><span data-mode="drive" class="on">自驾</span><span data-mode="train">火车</span></div><div class="hint" id="modehint" style="display:none;margin-top:6px">试点：京沪 / 京广 / 沪杭高铁沿线站点附近</div></div>
 <div class="rt">
  <div class="rt-row s"><span class="rt-dot"></span><label class="rt-f"><small>起点</small><input id="from" value="" placeholder="地名或地址"></label><span class="rt-a"><button class="ib" id="myloc" title="我的位置"><svg class="i" viewBox="0 0 24 24"><circle cx="12" cy="12" r="7"/><circle cx="12" cy="12" r="2.2" fill="currentColor"/><path d="M12 2v3M12 19v3M2 12h3M19 12h3"/></svg></button><button class="ib" data-pick="from" title="在地图上选起点"><svg class="i" viewBox="0 0 24 24"><path d="M12 21s-6.5-6-6.5-11a6.5 6.5 0 0113 0c0 5-6.5 11-6.5 11z"/><circle cx="12" cy="10" r="2.3"/></svg></button></span></div>
  <div id="vias"></div>
@@ -400,7 +401,7 @@ body.mob #ned{background:#fbf9f5!important;-webkit-backdrop-filter:none!importan
 <div class="pa-act"><button class="bt pri" id="plan"><svg class="i" viewBox="0 0 24 24"><circle cx="6" cy="18" r="2.2"/><circle cx="18" cy="6" r="2.2"/><path d="M8.2 18H15a3 3 0 000-6H9a3 3 0 010-6h6.8"/></svg>规划路线</button><button class="bt ol" id="ret"><svg class="i" viewBox="0 0 24 24"><path d="M9 14L4 9l5-5"/><path d="M4 9h10a6 6 0 010 12h-3"/></svg>返程</button></div>
 <div class="pa-sec"><div class="pa-sh"><span>播放</span></div>
  <div class="pl"><div class="seg"><button id="play" title="开始"><svg class="i" viewBox="0 0 24 24"><path d="M7 4.5v15l12-7.5z" fill="currentColor"/></svg></button><button id="pause" title="暂停"><svg class="i" viewBox="0 0 24 24"><path d="M8 5v14M16 5v14" stroke-width="3"/></svg></button><button id="reset" title="重置"><svg class="i" viewBox="0 0 24 24"><path d="M4 12a8 8 0 108-8 8.2 8.2 0 00-6 2.7"/><path d="M5 3v4h4"/></svg></button></div><div class="chips num" id="chips"></div></div><select id="speed" style="display:none"><option value="10">10 km/秒</option><option value="25" selected>25 km/秒</option><option value="60">60 km/秒</option><option value="150">150 km/秒</option></select></div>
-<div class="pa-sec"><div class="pa-sh"><span>车型</span></div><select id="vehsel" class="vehsel" onchange="setVeh(this.value)"></select></div><div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图</span></div></div>
+<div class="pa-sec" id="vehsec"><div class="pa-sh"><span id="vehLab">车型</span></div><select id="vehsel" class="vehsel" onchange="setVeh(this.value)"></select></div><div class="pa-sec"><div class="pa-sh"><span>底图</span></div><div class="chips bm" id="bmsel"><span data-bm="google">Google</span><span data-bm="esri">Esri</span><span data-bm="tdt">Esri+天地图</span></div></div>
 <div class="pa-sec"><div class="pa-sh"><span>镜头</span></div>
  <label class="sw"><span>镜头跟随</span><input type="checkbox" id="follow" checked></label>
  <label class="sw" id="cinerow" style="display:none"><span>电影镜头</span><input type="checkbox" id="cine" checked></label>
@@ -421,7 +422,7 @@ body.mob #ned{background:#fbf9f5!important;-webkit-backdrop-filter:none!importan
 <div class="nephr"><label class="nepb neib" title="添加照片" aria-label="添加照片"><input id="ne_add" type="file" accept="image/*" multiple class="nefi"><svg viewBox="0 0 24 24"><rect x="3" y="5" width="18" height="14" rx="2.5"/><circle cx="9" cy="10" r="1.6"/><path d="M21 16l-5-5-8 8"/><path d="M18 2v5M15.5 4.5h5" stroke-width="2.2"/></svg></label><label class="mcam nepb neib" title="拍照" aria-label="拍照"><input id="ne_cam" type="file" accept="image/*" capture="environment" class="nefi"><svg viewBox="0 0 24 24"><path d="M4 8h3l2-3h6l2 3h3v11H4z"/><circle cx="12" cy="13" r="3.5"/></svg></label><div id="ne_photos"><span class="neph0">添加照片</span></div><a id="ne_view" class="nepv" style="display:none">全部</a></div>
 <div id="ne_icons"></div><div class="necol"><span id="ne_iname"></span><div id="ne_sw"></div><label class="necc" title="自定义颜色"><input id="ne_color" type="color" value="#e91e63"></label></div></div>
 <div id="stat"><div class="sg"><div><div class="sk">已行驶</div><div class="sn"><b id="done">0</b><small>km</small></div></div><div><div class="sk">剩余</div><div class="sn"><b id="left">-</b><small>km</small></div></div><div><div class="sk">剩余时间</div><div class="sn sm"><span id="eta">-</span></div></div></div>
-<div class="pb"><i id="pbar"></i></div><div class="sx"><span>全程 <em id="tot">-</em> km</span><span>驾驶约 <em id="drv">-</em></span><span title="按路号识别的高速路段里程占比">高速 <em id="hwp">-</em></span></div>
+<div class="pb"><i id="pbar"></i></div><div class="sx"><span>全程 <em id="tot">-</em> km</span><span id="drvLab">驾驶约 <em id="drv">-</em></span><span id="hwpLab" title="按路号识别的高速路段里程占比">高速 <em id="hwp">-</em></span></div>
 <div class="sx"><span>下一服务区 <em id="nsvc">-</em></span><span>下一加油 <em id="nfuel" style="color:#30d158">-</em></span></div><div id="where" class="sx sw2"></div></div>
 <div id="stop"><h3 id="stopName"></h3><div id="stopTags"></div><div id="stopBody"></div><div>停留中 <span id="cd">5</span> 秒…</div></div>
 <svg id="lead"><line id="leadL" x1="0" y1="0" x2="0" y2="0" stroke="#fff" stroke-width="2" stroke-dasharray="5 4" opacity="0"/><circle id="leadC" r="5" fill="none" stroke="#fff" stroke-width="2" opacity="0"/></svg><div id="sign"></div><div id="arrive"></div>
@@ -488,28 +489,47 @@ const VEHS=[
  {n:'银色SUV · 特斯拉Model Y',len:1,parts:[[0.36,0.22,0.205,0,0.09,'#111'],[-0.22,-0.36,0.205,0,0.09,'#111'],[0.5,-0.5,0.2,0.03,0.2,'#c5c9cf'],[0.27,-0.38,0.175,0.2,0.32,'#28313b'],[0.5,0.47,0.13,0.11,0.13,'#eef2f5'],...TL(0.1,-0.48)]},
  {n:'中巴 · 丰田考斯特',len:1.45,parts:[[0.38,0.27,0.15,0,0.08,'#111'],[-0.26,-0.37,0.15,0,0.08,'#111'],[0.5,-0.5,0.145,0.03,0.3,'#f3efe6'],[0.49,-0.49,0.148,0.11,0.15,'#5f8f7a'],[0.46,-0.42,0.149,0.18,0.28,'#33414d'],[0.5,0.45,0.13,0.17,0.29,'#33414d'],[0.43,-0.48,0.125,0.3,0.33,'#e4dfd3'],[0.1,-0.05,0.07,0.33,0.36,'#cfc9bc'],...LT(0,0.1),...TL(0.1)]},
  {n:'重型卡车 · 奔驰',len:1.6,parts:[[0.45,0.39,0.1,0,0.06,'#111'],[0.14,0.04,0.1,0,0.06,'#111'],[-0.3,-0.46,0.1,0,0.06,'#111'],[0.5,0.33,0.09,0.03,0.25,'#2f5d8a'],[0.5,0.46,0.086,0.14,0.22,'#1f2a33'],[0.44,0.35,0.085,0.25,0.29,'#2f5d8a'],[0.31,-0.5,0.096,0.06,0.28,'#8a9aab'],[0.3,-0.49,0.08,0.28,0.285,'#6d7f90'],...LT(0,0.06),...TL(0.07,-0.495)]},
- {n:'摩托车 · 本田',len:0.62,parts:[[0.5,0.2,0.035,0,0.3,'#111'],[-0.2,-0.5,0.04,0,0.3,'#111'],[0.28,-0.3,0.085,0.18,0.3,'#c62828'],[0.24,0.2,0.21,0.32,0.36,'#555'],[0.02,-0.32,0.075,0.3,0.34,'#222'],[0.08,-0.22,0.14,0.34,0.62,'#3b3f46'],[0.14,-0.02,0.075,0.62,0.75,'#f5f5f5'],[0.53,0.5,0.035,0.24,0.29,'#fff59d'],[-0.5,-0.53,0.035,0.22,0.27,'#ff1744']]}];
-let VEH_I=(()=>{try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');if(r&&r.veh!=null&&Date.now()-r.t<6e5&&VEHS[r.veh])return r.veh;}catch(e){}return Math.floor(Math.random()*VEHS.length);})();
+ {n:'摩托车 · 本田',len:0.62,parts:[[0.5,0.2,0.035,0,0.3,'#111'],[-0.2,-0.5,0.04,0,0.3,'#111'],[0.28,-0.3,0.085,0.18,0.3,'#c62828'],[0.24,0.2,0.21,0.32,0.36,'#555'],[0.02,-0.32,0.075,0.3,0.34,'#222'],[0.08,-0.22,0.14,0.34,0.62,'#3b3f46'],[0.14,-0.02,0.075,0.62,0.75,'#f5f5f5'],[0.53,0.5,0.035,0.24,0.29,'#fff59d'],[-0.5,-0.53,0.035,0.22,0.27,'#ff1744']]},
+ {n:'复兴号高铁',len:1.85,parts:[[0.44,0.34,0.11,0,0.07,'#222'],[0.12,0.02,0.11,0,0.07,'#222'],[-0.26,-0.4,0.11,0,0.07,'#222'],[0.5,-0.5,0.135,0.04,0.2,'#eceff1'],[0.5,0.36,0.135,0.04,0.2,'#1565c0'],[0.34,-0.34,0.11,0.12,0.19,'#1c313a'],[0.08,-0.08,0.11,0.12,0.19,'#1c313a'],[-0.18,-0.34,0.11,0.12,0.19,'#1c313a'],[0.5,0.45,0.12,0.1,0.16,'#fff59d'],[-0.48,-0.5,0.09,0.08,0.14,'#ff1744'],[0.02,-0.02,0.02,0.2,0.3,'#546e7a']]}];
+const TRAIN_I=VEHS.length-1;const DRIVE_VEH_N=TRAIN_I;
+let travelMode='drive';let driveVehI=0;
+let VEH_I=(()=>{try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');if(r&&r.mode==='train'){travelMode='train';}if(r&&r.veh!=null&&Date.now()-r.t<6e5&&VEHS[r.veh]&&r.veh<DRIVE_VEH_N){driveVehI=r.veh;return travelMode==='train'?TRAIN_I:r.veh;}}catch(e){}driveVehI=Math.floor(Math.random()*DRIVE_VEH_N);return travelMode==='train'?TRAIN_I:driveVehI;})();
 const VEH=()=>VEHS[VEH_I];
 function vehSvg(v){const S=60,c=S/2,Lp=34*v.len,ps=v.parts.slice().sort((a,b)=>a[4]-b[4]);let o='<svg viewBox="0 0 '+S+' '+S+'" width="'+S+'" height="'+S+'"><ellipse cx="'+c+'" cy="'+(c+1)+'" rx="'+(Math.max(...v.parts.map(p=>p[2]))*Lp+2).toFixed(1)+'" ry="'+(Lp/2+2).toFixed(1)+'" fill="rgba(0,0,0,.35)"/>';
  for(const [f1,f2,w,b,t,col,off=0] of ps){const x=c+(off-w)*Lp,y=c-f1*Lp,W=2*w*Lp,H=(f1-f2)*Lp,r=Math.min(W,H)*0.28;o+='<rect x="'+x.toFixed(2)+'" y="'+y.toFixed(2)+'" width="'+W.toFixed(2)+'" height="'+H.toFixed(2)+'" rx="'+r.toFixed(2)+'" fill="'+col+'"'+(t>=0.15&&W>4?' stroke="rgba(255,255,255,.55)" stroke-width=".6"':'')+'/>';}
  return o+'</svg>';}
 let CAR_SVG=vehSvg(VEH());
-function setVeh(i){VEH_I=+i;CAR_SVG=vehSvg(VEH());const sel=document.getElementById('vehsel');if(sel)sel.value=VEH_I;
+function setVeh(i){VEH_I=+i;if(VEH_I<DRIVE_VEH_N)driveVehI=VEH_I;CAR_SVG=vehSvg(VEH());const sel=document.getElementById('vehsel');if(sel&&VEH_I<DRIVE_VEH_N)sel.value=VEH_I;
  if(typeof car!=='undefined'&&car&&car.setIcon){car.setIcon(L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}));carEl=car.getElement().firstChild;carEl.style.transform='rotate('+heading+'deg)';}
  else if(typeof carLL!=='undefined'&&carLL){if(window.__carMk&&carEl){carEl.innerHTML=CAR_SVG;carEl.dataset.veh=VEH_I;}updateCar(carLL[0],carLL[1]);}}
+function refreshModeUI(){const train=travelMode==='train';
+ document.querySelectorAll('#modesel span').forEach(e=>e.classList.toggle('on',e.dataset.mode===travelMode));
+ if($('paTitle'))$('paTitle').textContent=train?'火车路线':'自驾路线';
+ if($('modehint'))$('modehint').style.display=train?'':'none';
+ if($('vehLab'))$('vehLab').textContent=train?'车型（火车）':'车型';
+ if($('vehsel')){$('vehsel').disabled=train;if(train)$('vehsel').title='火车模式固定为复兴号';else $('vehsel').title='';}
+ if($('drvLab'))$('drvLab').innerHTML=train?'车程约 <em id="drv">'+(TXT.drv||'-')+'</em>':'驾驶约 <em id="drv">'+(TXT.drv||'-')+'</em>';
+ if($('hwpLab')){$('hwpLab').title=train?'铁路走廊':('按路号识别的高速路段里程占比');$('hwpLab').innerHTML=(train?'走廊 <em id="hwp">':'高速 <em id="hwp">')+(TXT.hwp||'-')+'</em>';}
+ document.querySelectorAll('#legend [data-leg]').forEach(el=>{const k=el.dataset.leg;if(k==='rail')el.style.display=train?'':'none';else if(k==='hw'||k==='rd'||k==='fuel'||k==='svc')el.style.display=train?'none':'';});
+ document.body.classList.toggle('train',train);}
+function setTravelMode(m,opts){const o=opts||{};if(m!=='drive'&&m!=='train')return;const prev=travelMode;travelMode=m;
+ if(m==='train'){if(VEH_I<DRIVE_VEH_N)driveVehI=VEH_I;setVeh(TRAIN_I);}else{setVeh(driveVehI);}
+ refreshModeUI();
+ if(!o.silent&&prev!==m){if(coords.length){msg(m==='train'?'已切换火车模式，请重新规划路线':'已切换自驾模式，请重新规划路线');}
+  else msg(m==='train'?'火车试点：京沪/京广/沪杭沿线':'自驾模式：OSRM 公路规划');}}
 function setRoute(c,dur,sg){coords=c;cum=[0];for(let i=1;i<c.length;i++)cum.push(cum[i-1]+hav(c[i-1],c[i]));total=cum[cum.length-1];duration=dur;
  segs=sg&&sg.length?sg:[{i0:0,i1:c.length-1,name:'',ref:''}];buildRuns();
  routeG.clearLayers();[doneLayer,miniRoute].forEach(l=>l&&l.remove());
- const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}
+ if(travelMode==='train'){L.polyline(c,{color:'#1a237e',weight:10,opacity:.9}).addTo(routeG);L.polyline(c,{color:'#7c4dff',weight:6}).addTo(routeG);}
+ else{const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}
  L.polyline(hwC,{color:'#3e2723',weight:10,opacity:.9}).addTo(routeG);L.polyline(hwC,{color:'#ff9800',weight:6}).addTo(routeG);
- L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);
+ L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);}
  doneLayer=L.polyline([],{color:'#d50000',weight:3.5}).addTo(map);
  miniRoute=L.polyline(c,{color:'#ff1744',weight:2}).addTo(mini);mini.fitBounds(miniRoute.getBounds(),{padding:[8,8]});
  if(!window.__restoring)map.fitBounds(L.latLngBounds(c),MOB()?(P=>({paddingTopLeft:[P.l,P.t],paddingBottomRight:[P.r,P.b]}))(__mpad()):{paddingTopLeft:[$('ctl').classList.contains('hide')?40:$('ctl').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});
  if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
  if(!miniCar)miniCar=L.circleMarker(c[0],{radius:5,color:'#fff',fillColor:'#ffeb3b',fillOpacity:1}).addTo(mini);
- $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}elev=window.__restoring?(elev||[]):[];if(!window.__restoring)resetAnim();else if(coords.length){heading=targetHeading();if(typeof updateCar==='function'){const q=pointAt(Math.min(dist,total)||0);updateCar(q[0],q[1]);}else if(car){car.setLatLng(pointAt(Math.min(dist,total)||0));if(carEl)carEl.style.transform='rotate('+heading+'deg)';}}ADDR.routeSet(c[0],c[c.length-1]);setPlayEn(true);}
+ $('tot').textContent=total.toFixed(1);{const hk=runs.filter(r=>r.hw).reduce((a,r)=>a+r.b-r.a,0);setT('drv',fmtH(dur));$('psum').textContent=total.toFixed(0)+' km · 约 '+fmtH(dur);if(travelMode==='train'){setT('hwp',(segs[0]&&segs[0].name)||'铁路');window.__hwKm=0;}else{setT('hwp',total?Math.round(hk/total*100)+'%':'—');window.__hwKm=hk;}refreshModeUI();}elev=window.__restoring?(elev||[]):[];if(!window.__restoring)resetAnim();else if(coords.length){heading=targetHeading();if(typeof updateCar==='function'){const q=pointAt(Math.min(dist,total)||0);updateCar(q[0],q[1]);}else if(car){car.setLatLng(pointAt(Math.min(dist,total)||0));if(carEl)carEl.style.transform='rotate('+heading+'deg)';}}ADDR.routeSet(c[0],c[c.length-1]);setPlayEn(true);}
 function project(lat,lon){let best=1e9,bi=0;for(let i=0;i<coords.length;i+=2){const d=hav([lat,lon],coords[i]);if(d<best){best=d;bi=i;}}return {off:best,along:cum[bi]};}
 let lastSvc=[],lastFb=false;function buildStops(list,isFallback){lastSvc=list;lastFb=!!isFallback;svcLayer.clearLayers();let arr=[];if(total<5)list=[];const eb=Math.min(10,total*0.1);
  for(const s of list){const p=project(s.lat,s.lon);if(p.off>1.5||p.along<eb||p.along>total-eb)continue;arr.push({...s,along:p.along});}
@@ -535,13 +555,21 @@ function emptyState(){setPlayEn(false);msg('输入起点和终点开始规划');
 function plan(){return planning||(planning=plan0().finally(()=>{planning=null;}));}
 let planGen=0;const withTO=(p,ms)=>Promise.race([p,new Promise((_,r)=>setTimeout(()=>r(Error('超时')),ms))]);
 async function plan0(){const f=$('from').value.trim(),t=$('to').value.trim(),v=$('via').value.split(/\n|,|，/).map(s=>s.trim()).filter(Boolean);
- if(!f||!t){msg('输入起点和终点开始规划');return;}pause();planSig=inSig();const gen=++planGen;clearRouteStops();resetAnim();msg('正在定位与规划路线…');const [key,rev]=cacheKey(f,t,v);const C=key&&window.CACHE&&CACHE[key];
+ if(!f||!t){msg('输入起点和终点开始规划');return;}pause();planSig=inSig();const gen=++planGen;clearRouteStops();resetAnim();
+ if(travelMode==='train'){msg('正在定位与匹配试点铁路…');let stage='定位';try{const fromLL=await geocode(f),toLL=await geocode(t);stage='铁路';
+  if(v.length)msg('火车试点暂不支持途经点，已按起终点匹配铁路');
+  if(typeof railRoute!=='function')throw Error('铁路数据未加载');
+  const r=railRoute(fromLL,toLL);setRoute(r.coords,r.duration,r.segs);
+  msg('已匹配 '+r.corridor.name+'：'+(r.fromSt&&r.fromSt.name||'')+' → '+(r.toSt&&r.toSt.name||'')+'（约 '+r.railKm.toFixed(0)+' km）');
+  window.__extras=extras(gen);}catch(e){const m=e&&e.message||String(e);msg(m);if(!coords.length)setPlayEn(false);}return;}
+ msg('正在定位与规划路线…');const [key,rev]=cacheKey(f,t,v);const C=key&&window.CACHE&&CACHE[key];
  let ok=false,stage='定位';try{if(C&&!Q.get('live'))throw 0;const pts=[];for(const q of [f,...v,t])pts.push(await geocode(q));stage='路线';const r=await osrm(pts);setRoute(r.coords,r.duration,r.segs);ok=true;}
  catch(e){if(C){const c=rev?[...C.coords].reverse():C.coords;setRoute(c,C.duration,rev?revSegs(C.segs,c.length):C.segs);}else{const m=e&&e.message||String(e);msg('路线规划失败：'+(stage==='路线'&&/abort|fetch|HTTP|Failed|NetworkError/i.test(m)?'路线服务（OSRM）无法访问或超时，请稍后重试':m));if(!coords.length)setPlayEn(false);return;}}
  if(C&&!ok){buildStops(C.services);elev=rev?[...C.elev].reverse():C.elev;drawProf();msg('');return;}
  msg('');window.__extras=extras(gen);}
 async function extras(gen){const live=()=>gen===planGen;
  withTO(liveElev(),15000).then(e=>{if(live()){elev=e;drawProf(true);}}).catch(()=>{});
+ if(travelMode==='train'){buildStops([]);if(live())$('where').textContent='火车模式：已跳过高速服务区';return;}
  if(total<5){buildStops([]);return;}
  $('where').textContent='正在查询服务区…';
  const P=liveServices();let slow=setTimeout(()=>{if(live()){$('where').textContent='服务区查询较慢，可先播放，结果到达后自动加入';}},8000);
@@ -814,14 +842,15 @@ ADDR.init();renderVia();renderChips();
 const ZOFF=window.ZOFF||0;// MapLibre 缩放级 = Leaflet 缩放级 - 1
 function saveState(){try{const c=map.getCenter(),st={t:Date.now(),coords,duration,segs,svc:lastSvc,fb:lastFb,elev,from:$('from').value,to:$('to').value,via:$('via').value,pick:ADDR.PICK,
  dist,v,heading,playing,arrived,stop:!!stopTimer,stopIdx:nextStop-1,cd:window.__cd,speed:$('speed').value,follow:$('follow').checked,hidden:$('ctl').classList.contains('hide'),muted,
- veh:VEH_I,cine:!!($('cine')&&$('cine').checked),bgm:!!($('bgm')&&$('bgm').checked),view:{lat:c.lat,lng:c.lng,z:map.getZoom()+ZOFF},sl:['dist','pit','exag'].filter(id=>$(id)).map(id=>[id,$(id).value])};sessionStorage.setItem('dm_state',JSON.stringify(st));}catch(e){console.warn('saveState',e);}}
+ veh:driveVehI,mode:travelMode,cine:!!($('cine')&&$('cine').checked),bgm:!!($('bgm')&&$('bgm').checked),view:{lat:c.lat,lng:c.lng,z:map.getZoom()+ZOFF},sl:['dist','pit','exag'].filter(id=>$(id)).map(id=>[id,$(id).value])};sessionStorage.setItem('dm_state',JSON.stringify(st));}catch(e){console.warn('saveState',e);}}
 $('sw').addEventListener('click',()=>{try{const x=$('xfade');if(x){x.classList.add('on');}}catch(_){}saveState();});
 let RESTORE=null;try{const r=JSON.parse(sessionStorage.getItem('dm_state')||'null');sessionStorage.removeItem('dm_state');if(r&&Date.now()-r.t<10*60e3&&r.coords&&r.coords.length)RESTORE=r;}catch(e){}
 if(RESTORE){try{const x=$('xfade');if(x){x.classList.add('on');requestAnimationFrame(()=>requestAnimationFrame(()=>x.classList.remove('on')));}}catch(_){}}
 function restoreRoute(st){window.__restoring=1;try{$('from').value=st.from;$('to').value=st.to;$('via').value=st.via;Object.assign(ADDR.PICK,st.pick||{});
  if(![...$('speed').options].some(o=>o.value===st.speed))$('speed').innerHTML+='<option value="'+st.speed+'">'+st.speed+' km/秒</option>';$('speed').value=st.speed;$('follow').checked=st.follow;
  for(const [id,v] of st.sl||[])if($(id)){$(id).value=v;$(id).dispatchEvent(new Event('input'));}
- if(st.veh!=null&&VEHS[st.veh])setVeh(st.veh);
+ if(st.mode==='train'||st.mode==='drive')setTravelMode(st.mode,{silent:1});
+ if(st.veh!=null&&VEHS[st.veh]&&st.veh<DRIVE_VEH_N){driveVehI=st.veh;if(travelMode!=='train')setVeh(st.veh);}
  if($('cine')&&st.cine!=null)$('cine').checked=!!st.cine;if($('bgm')&&st.bgm!=null){$('bgm').checked=!!st.bgm;$('bgm').dispatchEvent(new Event('change'));}
  dist=st.dist||0;heading=st.heading||0;
  setRoute(st.coords,st.duration,st.segs);buildStops(st.svc,st.fb);elev=st.elev||[];drawProf(true);}finally{window.__restoring=0;}}
@@ -851,7 +880,9 @@ let edgeT=0;function edgeWatch(now){if(!playing||$('follow').checked||now-edgeT<
  const A=clearArea(),p=pointAt(dist),c=map.latLngToContainerPoint([p[0],p[1]]),mx=(A.r-A.l)*0.12,my=(A.b-A.t)*0.12;
  if(c.x<A.l+mx||c.x>A.r-mx||c.y<A.t+my||c.y>A.b-my||!isFinite(c.x)){const dx=c.x-(A.l+A.r)/2,dy=c.y-(A.t+A.b)/2;panUntil=now+1100;panCar(dx,dy);window.__recenters=(window.__recenters||0)+1;}}
 function panCar(dx,dy){map.panBy([dx,dy],{animate:true,duration:0.9,easeLinearity:0.35});}
-$('vehsel').innerHTML=VEHS.map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').join('');$('vehsel').value=VEH_I;bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;try{const un=JSON.parse(Q.get('n')||'[]');if(un.length){const key=n=>n.lat.toFixed(4)+','+n.lon.toFixed(4);const ks=new Set(nodes.map(key));un.forEach(([lat,lon,title,note,dwell,icon,color])=>{const n={id:uid(),lat,lon,title,note,dwell:dwell||5,icon:icon||'camera',color:color||'#e91e63',photos:[]};if(!ks.has(key(n)))nodes.push(n);});saveNodes();}}catch(_){}if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
+$('vehsel').innerHTML=VEHS.slice(0,DRIVE_VEH_N).map((v,i)=>'<option value="'+i+'">'+v.n+'</option>').join('');$('vehsel').value=Math.min(VEH_I,DRIVE_VEH_N-1);if(travelMode==='train')setVeh(TRAIN_I);refreshModeUI();
+$('modesel').querySelectorAll('span').forEach(e=>e.onclick=()=>setTravelMode(e.dataset.mode));
+bindNodeUI();window.__ready=loadNodes().then(a=>{if(Q.get('nonodes'))a=[];nodes=a;try{const un=JSON.parse(Q.get('n')||'[]');if(un.length){const key=n=>n.lat.toFixed(4)+','+n.lon.toFixed(4);const ks=new Set(nodes.map(key));un.forEach(([lat,lon,title,note,dwell,icon,color])=>{const n={id:uid(),lat,lon,title,note,dwell:dwell||5,icon:icon||'camera',color:color||'#e91e63',photos:[]};if(!ks.has(key(n)))nodes.push(n);});saveNodes();}}catch(_){}if(RESTORE){restoreRoute(RESTORE);return;}if(Q.get('from'))$('from').value=Q.get('from');if(Q.get('to'))$('to').value=Q.get('to');if($('from').value.trim()&&$('to').value.trim())return plan();emptyState();}).then(()=>{rebuildStops();if(RESTORE){restoreRuntime(RESTORE);if(RESTORE.playing)setTimeout(audioHint,300);return;}if(Q.get('autoplay'))setTimeout(play,3000);});
 </script>
 <script>
 
@@ -977,6 +1008,6 @@ window.__mpad=function(){const W=innerWidth,H=innerHeight,g=id=>{const e=documen
  const cl=(v,m)=>Math.max(10,Math.min(v,m));t=cl(t,H*0.4);b=cl(b,H-t-100);r=cl(r,W*0.5);l=cl(l,W-r-100);return {t:Math.round(t),b:Math.round(b),l:Math.round(l),r:Math.round(r)};};
 </script>
 <script>if(matchMedia("(hover:none)").matches)for(const sh of document.styleSheets){try{const rs=sh.cssRules;for(let i=rs.length-1;i>=0;i--){const r=rs[i];if(r.selectorText&&r.selectorText.includes(":hover")){const k=r.selectorText.split(",").filter(x=>!x.includes(":hover"));if(k.length)r.selectorText=k.join(",");else sh.deleteRule(i);}}}catch(e){}}</script>
-<script src="lib/qr.js"></script><script src="lib/extras.js?v=v202610301349"></script><script src="lib/cine.js?v=v202610301349"></script><script src="lib/bgm.js?v=v202610301349"></script><script src="lib/msheet.js"></script><script src="lib/imp.js"></script><script src="lib/fav.js"></script>
-<script src="lib/mlay.js"></script>
+<script src="lib/qr.js?v=v202610301418"></script><script src="lib/extras.js?v=v202610301418"></script><script src="lib/cine.js?v=v202610301418"></script><script src="lib/bgm.js?v=v202610301418"></script><script src="lib/msheet.js?v=v202610301418"></script><script src="lib/imp.js?v=v202610301418"></script><script src="lib/fav.js?v=v202610301418"></script>
+<script src="lib/mlay.js?v=v202610301418"></script>
 </body></html>

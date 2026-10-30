@@ -93,10 +93,15 @@ let camBear=0,camInit=false,camZ=11,camZv=0;\nconst camBase=()=>14.6-6.6*(+$('di
 R(",routeG=L.layerGroup().addTo(map),doneLayer,car,carEl,",",doneLayer,carEl={style:{}},")
 R(",svcLayer=L.layerGroup().addTo(map),",",")
 R("""routeG.clearLayers();[doneLayer,miniRoute].forEach(l=>l&&l.remove());""","""[miniRoute].forEach(l=>l&&l.remove());""")
-R(""" L.polyline(hwC,{color:'#3e2723',weight:10,opacity:.9}).addTo(routeG);L.polyline(hwC,{color:'#ff9800',weight:6}).addTo(routeG);
- L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);
+R(""" if(travelMode==='train'){L.polyline(c,{color:'#1a237e',weight:10,opacity:.9}).addTo(routeG);L.polyline(c,{color:'#7c4dff',weight:6}).addTo(routeG);}
+ else{const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}
+ L.polyline(hwC,{color:'#3e2723',weight:10,opacity:.9}).addTo(routeG);L.polyline(hwC,{color:'#ff9800',weight:6}).addTo(routeG);
+ L.polyline(rdC,{color:'#002b36',weight:8,opacity:.9}).addTo(routeG);L.polyline(rdC,{color:'#00e5ff',weight:4.5}).addTo(routeG);}
  doneLayer=L.polyline([],{color:'#d50000',weight:3.5}).addTo(map);""",
-""" const ML=a=>{const lines=a.filter(p=>p&&p.length>=2).map(p=>p.map(q=>[q[1],q[0]]));return {type:'FeatureCollection',features:lines.length?[{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:lines}}]:[]};};GJ('hw',ML(hwC));GJ('rd',ML(rdC));
+""" const ML=a=>{const lines=a.filter(p=>p&&p.length>=2).map(p=>p.map(q=>[q[1],q[0]]));return {type:'FeatureCollection',features:lines.length?[{type:'Feature',properties:{},geometry:{type:'MultiLineString',coordinates:lines}}]:[]};};
+ if(travelMode==='train'){try{map.setPaintProperty('hw','line-color','#7c4dff');map.setPaintProperty('hw-c','line-color','#1a237e');}catch(_){}GJ('hw',ML([c]));GJ('rd',ML([]));}
+ else{try{map.setPaintProperty('hw','line-color','#ff9800');map.setPaintProperty('hw-c','line-color','#3e2723');}catch(_){}
+  const hwC=[],rdC=[];for(const s of segs){const p=c.slice(s.i0,s.i1+1);(isHw(s)?hwC:rdC).push(p);}GJ('hw',ML(hwC));GJ('rd',ML(rdC));}
  doneLayer={setLatLngs:a=>{const st=Math.max(1,Math.floor(a.length/1500)),o=[];for(let i=0;i<a.length-1;i+=st)o.push([a[i][1],a[i][0]]);const l=a[a.length-1];if(l)o.push([l[1],l[0]]);GJ('done',{type:'Feature',properties:{},geometry:{type:'LineString',coordinates:o.length>1?o:[[0,0],[0,0]]}});}};""")
 R("if(!window.__restoring)map.fitBounds(L.latLngBounds(c),MOB()?(P=>({paddingTopLeft:[P.l,P.t],paddingBottomRight:[P.r,P.b]}))(__mpad()):{paddingTopLeft:[$(\'ctl\').classList.contains(\'hide\')?40:$(\'ctl\').getBoundingClientRect().right+30,60],paddingBottomRight:[60,170]});","{if(!window.__restoring){let b=new maplibregl.LngLatBounds();c.forEach(q=>b.extend([q[1],q[0]]));map.fitBounds(b,{padding:{top:70,bottom:170,right:60,left:MOB()?24:$(\'ctl\').classList.contains(\'hide\')?50:$(\'ctl\').getBoundingClientRect().right+30,...(MOB()?(P=>({top:P.t,bottom:P.b,left:P.l,right:P.r}))(__mpad()):{})},pitch:45,bearing:0,duration:0});camInit=false;}}")
 R(""" if(!car){car=L.marker(c[0],{icon:L.divIcon({className:'',html:'<div class="carw">'+CAR_SVG+'</div>',iconSize:[60,60],iconAnchor:[30,30]}),zIndexOffset:1000,interactive:false}).addTo(map);carEl=car.getElement().firstChild;}
